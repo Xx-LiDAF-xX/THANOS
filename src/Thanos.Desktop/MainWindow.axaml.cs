@@ -33,6 +33,14 @@ public sealed partial class MainWindow : Window
     {
         if (await PickFile("Select Kyty log") is { } path) { ViewModel.LogPath = path; }
     }
+    private async void ChooseKnowledge(object? sender, RoutedEventArgs e)
+    {
+        if (await PickFile("Select knowledge JSON") is { } path) { ViewModel.KnowledgePath = path; }
+    }
+    private async void ChooseRelated(object? sender, RoutedEventArgs e)
+    {
+        if (await PickFile("Select related executable") is { } path) { ViewModel.RelatedPath = path; }
+    }
     private async void ExportReport(object? sender, RoutedEventArgs e)
     {
         try

@@ -42,7 +42,7 @@ public interface IKnowledgeStore
     Task<AnalysisReport?> GetAnalysisAsync(string id, CancellationToken cancellationToken = default);
 }
 
-// Extension points only. Implementations arrive in the roadmap phase indicated in ARCHITECTURE.md.
+// Binary inspection is implemented in Phase 2; remaining extension points follow the roadmap.
 public interface IBinaryAnalyzer { Task<GameFingerprint> AnalyzeAsync(string path, CancellationToken cancellationToken = default); }
 public interface ICompatibilitySource { Task<GameFamily[]> FindFamiliesAsync(GameFingerprint game, CancellationToken cancellationToken = default); }
 public interface IPatchProvider { Task<PatchProposal[]> FindPatchesAsync(GameFingerprint game, CancellationToken cancellationToken = default); }

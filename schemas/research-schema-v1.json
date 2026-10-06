@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Xx-LiDAF-xX/THANOS/main/schemas/research-schema-v1.json",
+  "title": "research",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "evidence": {
+      "$ref": "analysis-schema-v1.json"
+    },
+    "binary": {
+      "anyOf": [
+        {
+          "$ref": "binary-inspection-schema-v1.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "diagnosis": {
+      "$ref": "diagnosis-report-schema-v1.json"
+    },
+    "relatedFamilies": {
+      "type": "array",
+      "items": {
+        "$ref": "game-family-schema-v1.json"
+      }
+    },
+    "relatedBuilds": {
+      "type": "array",
+      "items": {
+        "$ref": "family-relationship-schema-v1.json"
+      }
+    },
+    "knownIssues": {
+      "type": "array",
+      "items": {
+        "$ref": "knowledge-entry-schema-v1.json"
+      }
+    },
+    "patchFamilies": {
+      "type": "array",
+      "items": {
+        "$ref": "patch-family-schema-v1.json"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "evidence",
+    "binary",
+    "diagnosis",
+    "relatedFamilies",
+    "relatedBuilds",
+    "knownIssues",
+    "patchFamilies",
+    "limitations"
+  ],
+  "additionalProperties": false
+}

@@ -26,4 +26,13 @@ public static class ServiceFactory
         var fingerprints = new GameFingerprinter(files, paths);
         return new AnalysisService(fingerprints, new KytyCapabilityDetector(fingerprints), new KytyLogParser(files, paths));
     }
+
+    public static ElfBinaryAnalyzer CreateBinaryAnalyzer()
+    {
+        var files = new LocalFileSystem();
+        var paths = new LocalPathService();
+        return new ElfBinaryAnalyzer(files, paths, new GameFingerprinter(files, paths));
+    }
+
+    public static IResearchService CreateResearchService() => new ResearchService(CreateAnalysisService(), CreateBinaryAnalyzer(), new DiagnosisEngine());
 }

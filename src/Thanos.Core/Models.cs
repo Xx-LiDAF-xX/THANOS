@@ -96,7 +96,7 @@ public sealed record ParsedLog
     public string[] Limitations { get; init; } = [];
 }
 
-// Contracts for later phases; these models do not assert that diagnosis or patching exists.
+// Versioned diagnosis and forward-looking patch/prompt contracts.
 public sealed record RootCause
 {
     public int SchemaVersion { get; init; } = 1;

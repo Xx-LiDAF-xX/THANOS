@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Xx-LiDAF-xX/THANOS/main/schemas/binary-difference-schema-v1.json",
+  "title": "binary-difference",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "originalSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "candidateSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "changedBytes": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "ranges": {
+      "type": "array",
+      "items": {
+        "$ref": "common-schema-v1.json#/$defs/ChangedRange"
+      }
+    },
+    "truncated": {
+      "type": "boolean"
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "originalSha256",
+    "candidateSha256",
+    "changedBytes",
+    "ranges",
+    "truncated",
+    "limitations"
+  ],
+  "additionalProperties": false
+}

@@ -14,7 +14,11 @@ public sealed class SchemaContractTests
         { typeof(PatchFamily), "patch-family" }, { typeof(PatchProposal), "patch" },
         { typeof(AIPrompt), "ai-prompt" }, { typeof(VerificationResult), "verification" },
         { typeof(ErrorSignature), "error-signature" }, { typeof(FamilyRelationship), "family-relationship" },
-        { typeof(AnalysisReport), "analysis" }
+        { typeof(AnalysisReport), "analysis" },
+        { typeof(BinaryInspection), "binary-inspection" }, { typeof(DiagnosisReport), "diagnosis-report" },
+        { typeof(KnowledgeEntry), "knowledge-entry" }, { typeof(KnowledgeBundle), "knowledge-bundle" },
+        { typeof(ResearchReport), "research" }, { typeof(AddressMappingResult), "address-mapping" },
+        { typeof(BinaryDifference), "binary-difference" }
     };
 
     [Theory]

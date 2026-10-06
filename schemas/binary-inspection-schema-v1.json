@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Xx-LiDAF-xX/THANOS/main/schemas/binary-inspection-schema-v1.json",
+  "title": "binary-inspection",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "fingerprint": {
+      "$ref": "game-schema-v1.json"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "inspected",
+        "unsupported",
+        "malformed",
+        "limited"
+      ]
+    },
+    "format": {
+      "anyOf": [
+        {
+          "type": "string",
+          "enum": [
+            "ELF32",
+            "ELF64"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "byteOrder": {
+      "anyOf": [
+        {
+          "type": "string",
+          "enum": [
+            "little",
+            "big"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "symbols": {
+      "type": "array",
+      "items": {
+        "$ref": "common-schema-v1.json#/$defs/SymbolInfo"
+      }
+    },
+    "imports": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "exports": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "relocations": {
+      "type": "array",
+      "items": {
+        "$ref": "common-schema-v1.json#/$defs/RelocationInfo"
+      }
+    },
+    "strings": {
+      "type": "array",
+      "items": {
+        "$ref": "common-schema-v1.json#/$defs/BinaryString"
+      }
+    },
+    "codeSignatures": {
+      "type": "array",
+      "items": {
+        "$ref": "common-schema-v1.json#/$defs/CodeSignature"
+      }
+    },
+    "codeInventoryComplete": {
+      "type": "boolean"
+    },
+    "loadMappings": {
+      "type": "array",
+      "items": {
+        "$ref": "common-schema-v1.json#/$defs/LoadMapping"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "fingerprint",
+    "status",
+    "format",
+    "byteOrder",
+    "symbols",
+    "imports",
+    "exports",
+    "relocations",
+    "strings",
+    "codeSignatures",
+    "codeInventoryComplete",
+    "loadMappings",
+    "limitations"
+  ],
+  "additionalProperties": false
+}

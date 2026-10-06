@@ -1,5 +1,7 @@
 # Architecture
 
+The diagram and original API below document the preserved Phase 1 evidence pipeline. Phase 2 adds a separate `IResearchService` and research wire contract; see [docs/PHASE2.md](docs/PHASE2.md) for the current composition, binary/diagnosis engines and additive SQLite migration. The CLI keeps `analyze` compatible while `diagnose` and desktop Analyze use Phase 2.
+
 ## Repository tree
 
 ```text
@@ -96,7 +98,7 @@ Task IKnowledgeStore.SaveAnalysisAsync(string id, AnalysisReport report, Cancell
 Task<AnalysisReport?> IKnowledgeStore.GetAnalysisAsync(string id, CancellationToken token);
 ```
 
-Contracts for compatibility sources, patch providers, binary analyzers, prompt templates/generator, Kyty adapters and runners establish extension points. They are not registered or called yet. Adding an interface does not claim an implemented feature. No exceptions pretending a future engine exists, fake pass results or placeholder patch bytes are exposed.
+Contracts for compatibility sources, patch providers, prompt templates/generator, Kyty adapters and runners establish extension points for later providers. Phase 2 implements IBinaryAnalyzer through its bounded ELF inspector and adds dedicated research, diagnosis, relationship and knowledge-store interfaces. Adding an interface does not claim an implemented feature. No fake pass results or placeholder patch bytes are exposed.
 
 ## CLI architecture
 

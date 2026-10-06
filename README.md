@@ -2,7 +2,7 @@
 
 Open-source, cross-platform evidence collection and compatibility research for games tested through Kyty. GPL-3.0-or-later.
 
-**Status: Phase 1 / 0.1.0 foundation.** The CLI and Avalonia desktop shell share the same analysis services. There is no embedded AI, emulator execution, diagnosis engine, patch import, or patch application in this release.
+**Status: Phase 2 / 0.2.0 research.** The CLI and Avalonia desktop shell share evidence and research services. Phase 2 adds accessible ELF analysis, error correlation, root-cause candidates, binary relationships and a provenanced local knowledge base. AI prompts, patch import/application and emulator execution remain later phases.
 
 ## What works
 
@@ -13,8 +13,13 @@ Open-source, cross-platform evidence collection and compatibility research for g
 - Parse bounded UTF-8 logs, preserve raw text/hash and line order, identify initial error categories, capture log-reported metadata and hardware.
 - Export JSON and store/retrieve evidence reports in a migrated SQLite database.
 - Use the desktop shell to select paths, analyze, export and copy evidence JSON.
+- Inspect accessible ELF32/64 sections, segments, symbols, dynamic imports/exports, relocations, ASCII strings, executable-section hashes and symbol-bounded function hashes.
+- Map file, virtual and runtime addresses through unique PT_LOAD mappings; runtime mapping requires an explicit load bias. Zero-filled memory cannot be mapped to file bytes.
+- Match literal error signatures, identify the earliest observed error candidate and separate possible downstream effects from independent failures. Every root-cause candidate carries facts, evidence, hypotheses, confidence and a recommendation.
+- Compare code evidence across builds without copying offsets or equating similar title IDs; compare original/candidate bytes as bounded ranges with context.
+- Import/export versioned knowledge with families, exact-hash bindings, logical patch families, issues/fixes, error signatures, relationships and provenance. Store Phase 2 research snapshots separately from Phase 1 analyses.
 
-Unknown identities, engines, versions and families remain null. Lexical log labels are heuristic observations, not root-cause conclusions. A parsed log title ID is unverified evidence; it is not silently assigned to the game's fingerprint. Protected or unfamiliar files still receive a hash and partial analysis.
+Unknown identities, engines and versions remain null. Family assignment requires explicit confirmed/tool-verified family and exact-hash binding records; those imported statuses are source claims, not independently authenticated by THANOS. Unverified family claims appear as related knowledge without assigning identity. Lexical matches are hypotheses, not established root causes or verified fixes. Protected or unfamiliar files still receive a hash and partial analysis, with log diagnosis available.
 
 ## Build and test
 
@@ -51,13 +56,23 @@ dotnet run --project src/Thanos.Cli -c Release --no-build -- parse-log ./example
 dotnet run --project src/Thanos.Cli -c Release --no-build -- analyze ./Game --kyty ./Kyty --log ./kyty.log --database ./knowledge.db
 dotnet run --project src/Thanos.Cli -c Release --no-build -- database init ./knowledge.db
 dotnet run --project src/Thanos.Cli -c Release --no-build -- database export ./knowledge.db ANALYSIS_ID
+dotnet run --project src/Thanos.Cli -c Release --no-build -- binary-info ./Game/eboot.bin
+dotnet run --project src/Thanos.Cli -c Release --no-build -- diagnose ./Game --log ./kyty.log --related ./OtherBuild/eboot.bin --database ./knowledge.db
+dotnet run --project src/Thanos.Cli -c Release --no-build -- map-address ./Game/eboot.bin virtualAddress 0x400100 fileOffset
+dotnet run --project src/Thanos.Cli -c Release --no-build -- compare-builds ./BuildA/eboot.bin ./BuildB/eboot.bin
+dotnet run --project src/Thanos.Cli -c Release --no-build -- diff-binaries ./original.elf ./candidate.elf
+dotnet run --project src/Thanos.Cli -c Release --no-build -- knowledge import ./knowledge.db ./examples/knowledge.json
+dotnet run --project src/Thanos.Cli -c Release --no-build -- knowledge export ./knowledge.db
+dotnet run --project src/Thanos.Cli -c Release --no-build -- database export-research ./knowledge.db RESEARCH_ID
 ```
 
 Replace paths with local inputs. The sample log is explicitly synthetic, with no claim of real game compatibility. JSON goes to stdout; diagnostics and saved analysis IDs go to stderr. Redirect stdout to export a report. Exit codes: `0` collected evidence (possibly partial), `2` invalid usage/unimplemented command, `3` input/storage error, `130` cancellation.
 
+`analyze` retains the original Phase 1 JSON contract. Use `diagnose` for the new research report. `diagnose --database` reads knowledge and saves a research snapshot; `--knowledge file.json` is an alternative direct input and cannot be combined with `--database`. The desktop Analyze command emits the same Phase 2 research format and accepts optional knowledge/related-build files.
+
 ## Packaging
 
-Phase 1 CI validates framework-dependent publications on each host and uploads a ZIP with CLI, desktop and license notices. End users need the .NET 10 runtime, not the SDK. Python is only for contributor checks.
+CI validates framework-dependent publications on each host and uploads a versioned ZIP with CLI, desktop, source references and license notices. End users need the .NET 10 runtime, not the SDK. Python is only for contributor checks.
 
 ```sh
 dotnet publish src/Thanos.Cli -c Release --no-restore --self-contained false -o artifacts/cli
@@ -70,7 +85,7 @@ Self-contained native ZIP/installers, AppImage/tar.gz, .app/DMG, signing and rel
 
 ## Documentation
 
-Start with [ARCHITECTURE.md](ARCHITECTURE.md) for the repository tree, diagrams, contracts, phase boundaries and storage hierarchy. [docs/PHASE1.md](docs/PHASE1.md) indexes every first-task deliverable. [schemas/README.md](schemas/README.md) documents wire formats; [ROADMAP.md](ROADMAP.md) defines subsequent milestones. Contribution and security guidelines are in [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
+Start with [docs/PHASE2.md](docs/PHASE2.md) for research commands, architecture, knowledge semantics and binary limits. [ARCHITECTURE.md](ARCHITECTURE.md) describes the foundation; [docs/PHASE1.md](docs/PHASE1.md) retains the first-task deliverable index. [schemas/README.md](schemas/README.md) documents wire formats; [ROADMAP.md](ROADMAP.md) defines subsequent milestones. Contribution and security guidelines are in [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
 
 Inputs are read-only. Archives are hashed as ordinary files and are not extracted. Unrecognized containers do not imply successful code inspection or decryption. Application JSON Lines logs use the platform's local application-data directory under `THANOS/logs`; full input paths and game bytes are not written to these logs. Exported analysis reports do contain local paths and raw user-supplied logs.
 

@@ -63,6 +63,28 @@ SCHEMAS = {
     "analysis": dict(game=ref("game"), kyty=nullable(ref("kyty-fingerprint")), log=nullable(ref("parsed-log")), limitations=array()),
 }
 
+# Phase 2 adds independent contracts; the Phase 1 schemas remain unchanged.
+DEFS.update({
+    "SymbolInfo": obj(dict(name=STRING, address=common("BinaryAddress"), size={"type": "integer", "minimum": 0}, binding=STRING, type=STRING, sectionIndex={"type": "integer", "minimum": 0}, isImport={"type": "boolean"}, isExport={"type": "boolean"})),
+    "RelocationInfo": obj(dict(location=common("BinaryAddress"), type=STRING, symbol=nullable(STRING), addend=nullable(INTEGER))),
+    "BinaryString": obj(dict(location=common("BinaryAddress"), value=STRING)),
+    "CodeSignature": obj(dict(name=STRING, location=common("BinaryAddress"), size={"type": "integer", "minimum": 1}, sha256=HASH, kind=enum("section", "segment", "symbolFunction"))),
+    "LoadMapping": obj(dict(offset=common("BinaryAddress"), address=common("BinaryAddress"), fileSize={"type": "integer", "minimum": 0}, memorySize={"type": "integer", "minimum": 0}, flags={"type": "integer", "minimum": 0, "maximum": 4294967295})),
+    "SignatureMatch": obj(dict(signatureId=STRING, lineNumber={"type": "integer", "minimum": 1}, hypothesis=STRING, confidence=CONFIDENCE, provenance=common("Provenance"))),
+    "CorrelationLink": obj(dict(fromLine={"type": "integer", "minimum": 1}, toLine={"type": "integer", "minimum": 1}, relationship=STRING, confidence=CONFIDENCE, evidence=EVIDENCE)),
+    "FamilyBinding": obj(dict(executableSha256=HASH, gameFamilyId=STRING, provenance=common("Provenance"))),
+    "ChangedRange": obj(dict(offset=common("BinaryAddress"), originalSize={"type": "integer", "minimum": 0}, candidateSize={"type": "integer", "minimum": 0}, originalBytes=STRING, candidateBytes=STRING, beforeContext=STRING, afterContext=STRING)),
+})
+SCHEMAS.update({
+    "binary-inspection": dict(fingerprint=ref("game"), status=enum("inspected", "unsupported", "malformed", "limited"), format=nullable(enum("ELF32", "ELF64")), byteOrder=nullable(enum("little", "big")), symbols=array(common("SymbolInfo")), imports=array(), exports=array(), relocations=array(common("RelocationInfo")), strings=array(common("BinaryString")), codeSignatures=array(common("CodeSignature")), codeInventoryComplete={"type": "boolean"}, loadMappings=array(common("LoadMapping")), limitations=array()),
+    "address-mapping": dict(input=common("BinaryAddress"), output=nullable(common("BinaryAddress")), status=enum("Mapped", "Unknown"), evidence=EVIDENCE),
+    "diagnosis-report": dict(primaryFailure=nullable(ref("error-event")), secondaryFailures=array(ref("error-event")), independentFailures=array(ref("error-event")), matches=array(common("SignatureMatch")), correlations=array(common("CorrelationLink")), candidates=array(ref("diagnosis")), limitations=array()),
+    "knowledge-entry": dict(id=STRING, gameFamilyId=nullable(STRING), kind=enum("issue", "fix", "compatibility"), summary=STRING, executableHashes=array(HASH), signatureIds=array(), provenance=common("Provenance")),
+    "knowledge-bundle": dict(families=array(ref("game-family")), bindings=array(common("FamilyBinding")), patchFamilies=array(ref("patch-family")), entries=array(ref("knowledge-entry")), errorSignatures=array(ref("error-signature")), relationships=array(ref("family-relationship"))),
+    "research": dict(evidence=ref("analysis"), binary=nullable(ref("binary-inspection")), diagnosis=ref("diagnosis-report"), relatedFamilies=array(ref("game-family")), relatedBuilds=array(ref("family-relationship")), knownIssues=array(ref("knowledge-entry")), patchFamilies=array(ref("patch-family")), limitations=array()),
+    "binary-difference": dict(originalSha256=HASH, candidateSha256=HASH, changedBytes={"type": "integer", "minimum": 0}, ranges=array(common("ChangedRange")), truncated={"type": "boolean"}, limitations=array()),
+})
+
 
 def generate(check=False):
     documents = {name: obj(dict(schemaVersion={"const": 1}, **properties)) for name, properties in SCHEMAS.items()}
