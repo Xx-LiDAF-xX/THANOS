@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Xx-LiDAF-xX/THANOS/main/schemas/ai-prompt-schema-v1.json",
+  "title": "ai-prompt",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "diagnose",
+        "findExistingFix",
+        "writePatch",
+        "portPatch",
+        "compareBuilds",
+        "investigateEmulatorIssue",
+        "optimizePerformance",
+        "deepReverseEngineering"
+      ]
+    },
+    "text": {
+      "type": "string"
+    },
+    "readiness": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "missingEvidence": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "common-schema-v1.json#/$defs/Evidence"
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "mode",
+    "text",
+    "readiness",
+    "missingEvidence",
+    "evidence"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Xx-LiDAF-xX/THANOS/main/schemas/patch-family-schema-v1.json",
+  "title": "patch-family",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "id": {
+      "type": "string"
+    },
+    "gameFamilyId": {
+      "type": "string"
+    },
+    "logicalFix": {
+      "type": "string"
+    },
+    "implementationIds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "provenance": {
+      "$ref": "common-schema-v1.json#/$defs/Provenance"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "gameFamilyId",
+    "logicalFix",
+    "implementationIds",
+    "provenance"
+  ],
+  "additionalProperties": false
+}

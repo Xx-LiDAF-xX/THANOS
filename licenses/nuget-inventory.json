@@ -1,0 +1,305 @@
+[
+  {
+    "package": "Avalonia.Angle.Windows.Natives/2.1.25547.20250602",
+    "declaredLicense": "LICENSE",
+    "notices": [
+      "Avalonia.Angle.Windows.Natives_2.1.25547.20250602-LICENSE"
+    ]
+  },
+  {
+    "package": "Avalonia.BuildServices/11.3.2",
+    "declaredLicense": "MIT",
+    "notices": [
+      "Avalonia-source-LICENSE.txt"
+    ]
+  },
+  {
+    "package": "Avalonia.Desktop/11.3.14",
+    "declaredLicense": "MIT",
+    "notices": [
+      "Avalonia-source-LICENSE.txt"
+    ]
+  },
+  {
+    "package": "Avalonia.FreeDesktop/11.3.14",
+    "declaredLicense": "MIT",
+    "notices": [
+      "Avalonia-source-LICENSE.txt"
+    ]
+  },
+  {
+    "package": "Avalonia.Native/11.3.14",
+    "declaredLicense": "MIT",
+    "notices": [
+      "Avalonia-source-LICENSE.txt"
+    ]
+  },
+  {
+    "package": "Avalonia.Remote.Protocol/11.3.14",
+    "declaredLicense": "MIT",
+    "notices": [
+      "Avalonia-source-LICENSE.txt"
+    ]
+  },
+  {
+    "package": "Avalonia.Skia/11.3.14",
+    "declaredLicense": "MIT",
+    "notices": [
+      "Avalonia-source-LICENSE.txt"
+    ]
+  },
+  {
+    "package": "Avalonia.Themes.Fluent/11.3.14",
+    "declaredLicense": "MIT",
+    "notices": [
+      "Avalonia-source-LICENSE.txt"
+    ]
+  },
+  {
+    "package": "Avalonia.Win32/11.3.14",
+    "declaredLicense": "MIT",
+    "notices": [
+      "Avalonia-source-LICENSE.txt"
+    ]
+  },
+  {
+    "package": "Avalonia.X11/11.3.14",
+    "declaredLicense": "MIT",
+    "notices": [
+      "Avalonia-source-LICENSE.txt"
+    ]
+  },
+  {
+    "package": "Avalonia/11.3.14",
+    "declaredLicense": "MIT",
+    "notices": [
+      "Avalonia-source-LICENSE.txt"
+    ]
+  },
+  {
+    "package": "HarfBuzzSharp.NativeAssets.Linux/8.3.1.1",
+    "declaredLicense": "MIT",
+    "notices": [
+      "HarfBuzzSharp.NativeAssets.Linux_8.3.1.1-LICENSE.txt",
+      "HarfBuzzSharp.NativeAssets.Linux_8.3.1.1-THIRD-PARTY-NOTICES.txt"
+    ]
+  },
+  {
+    "package": "HarfBuzzSharp.NativeAssets.macOS/8.3.1.1",
+    "declaredLicense": "MIT",
+    "notices": [
+      "HarfBuzzSharp.NativeAssets.macOS_8.3.1.1-LICENSE.txt",
+      "HarfBuzzSharp.NativeAssets.macOS_8.3.1.1-THIRD-PARTY-NOTICES.txt"
+    ]
+  },
+  {
+    "package": "HarfBuzzSharp.NativeAssets.WebAssembly/8.3.1.1",
+    "declaredLicense": "MIT",
+    "notices": [
+      "HarfBuzzSharp.NativeAssets.WebAssembly_8.3.1.1-LICENSE.txt",
+      "HarfBuzzSharp.NativeAssets.WebAssembly_8.3.1.1-THIRD-PARTY-NOTICES.txt"
+    ]
+  },
+  {
+    "package": "HarfBuzzSharp.NativeAssets.Win32/8.3.1.1",
+    "declaredLicense": "MIT",
+    "notices": [
+      "HarfBuzzSharp.NativeAssets.Win32_8.3.1.1-LICENSE.txt",
+      "HarfBuzzSharp.NativeAssets.Win32_8.3.1.1-THIRD-PARTY-NOTICES.txt"
+    ]
+  },
+  {
+    "package": "HarfBuzzSharp/8.3.1.1",
+    "declaredLicense": "MIT",
+    "notices": [
+      "HarfBuzzSharp_8.3.1.1-LICENSE.txt"
+    ]
+  },
+  {
+    "package": "MicroCom.Runtime/0.11.0",
+    "declaredLicense": "MIT",
+    "notices": [
+      "MicroCom-source-LICENSE.txt"
+    ]
+  },
+  {
+    "package": "Microsoft.CodeCoverage/17.14.1",
+    "declaredLicense": "MIT",
+    "notices": [
+      "Microsoft.CodeCoverage_17.14.1-ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "package": "Microsoft.Data.Sqlite.Core/10.0.9",
+    "declaredLicense": "MIT",
+    "notices": [
+      "Microsoft-source-LICENSE.txt"
+    ]
+  },
+  {
+    "package": "Microsoft.Data.Sqlite/10.0.9",
+    "declaredLicense": "MIT",
+    "notices": [
+      "Microsoft-source-LICENSE.txt"
+    ]
+  },
+  {
+    "package": "Microsoft.NET.Test.Sdk/17.14.1",
+    "declaredLicense": "MIT",
+    "notices": [
+      "Microsoft-source-LICENSE.txt"
+    ]
+  },
+  {
+    "package": "Microsoft.TestPlatform.ObjectModel/17.14.1",
+    "declaredLicense": "MIT",
+    "notices": [
+      "Microsoft-source-LICENSE.txt"
+    ]
+  },
+  {
+    "package": "Microsoft.TestPlatform.TestHost/17.14.1",
+    "declaredLicense": "MIT",
+    "notices": [
+      "Microsoft.TestPlatform.TestHost_17.14.1-ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "package": "Newtonsoft.Json/13.0.3",
+    "declaredLicense": "MIT",
+    "notices": [
+      "Newtonsoft.Json_13.0.3-LICENSE.md"
+    ]
+  },
+  {
+    "package": "SkiaSharp.NativeAssets.Linux/2.88.9",
+    "declaredLicense": "MIT",
+    "notices": [
+      "SkiaSharp.NativeAssets.Linux_2.88.9-LICENSE.txt",
+      "SkiaSharp.NativeAssets.Linux_2.88.9-THIRD-PARTY-NOTICES.txt"
+    ]
+  },
+  {
+    "package": "SkiaSharp.NativeAssets.macOS/2.88.9",
+    "declaredLicense": "MIT",
+    "notices": [
+      "SkiaSharp.NativeAssets.macOS_2.88.9-LICENSE.txt",
+      "SkiaSharp.NativeAssets.macOS_2.88.9-THIRD-PARTY-NOTICES.txt"
+    ]
+  },
+  {
+    "package": "SkiaSharp.NativeAssets.WebAssembly/2.88.9",
+    "declaredLicense": "MIT",
+    "notices": [
+      "SkiaSharp.NativeAssets.WebAssembly_2.88.9-LICENSE.txt",
+      "SkiaSharp.NativeAssets.WebAssembly_2.88.9-THIRD-PARTY-NOTICES.txt"
+    ]
+  },
+  {
+    "package": "SkiaSharp.NativeAssets.Win32/2.88.9",
+    "declaredLicense": "MIT",
+    "notices": [
+      "SkiaSharp.NativeAssets.Win32_2.88.9-LICENSE.txt",
+      "SkiaSharp.NativeAssets.Win32_2.88.9-THIRD-PARTY-NOTICES.txt"
+    ]
+  },
+  {
+    "package": "SkiaSharp/2.88.9",
+    "declaredLicense": "MIT",
+    "notices": [
+      "SkiaSharp_2.88.9-LICENSE.txt",
+      "SkiaSharp_2.88.9-THIRD-PARTY-NOTICES.txt"
+    ]
+  },
+  {
+    "package": "SQLitePCLRaw.bundle_e_sqlite3/2.1.11",
+    "declaredLicense": "Apache-2.0",
+    "notices": [
+      "SQLitePCLRaw-source-LICENSE.txt"
+    ]
+  },
+  {
+    "package": "SQLitePCLRaw.core/2.1.11",
+    "declaredLicense": "Apache-2.0",
+    "notices": [
+      "SQLitePCLRaw-source-LICENSE.txt"
+    ]
+  },
+  {
+    "package": "SQLitePCLRaw.lib.e_sqlite3/3.53.3",
+    "declaredLicense": "LICENSE.txt",
+    "notices": [
+      "SQLitePCLRaw.lib.e_sqlite3_3.53.3-LICENSE.txt"
+    ]
+  },
+  {
+    "package": "SQLitePCLRaw.provider.e_sqlite3/2.1.11",
+    "declaredLicense": "Apache-2.0",
+    "notices": [
+      "SQLitePCLRaw-source-LICENSE.txt"
+    ]
+  },
+  {
+    "package": "Tmds.DBus.Protocol/0.21.3",
+    "declaredLicense": "MIT",
+    "notices": [
+      "Tmds-source-LICENSE.txt"
+    ]
+  },
+  {
+    "package": "xunit.abstractions/2.0.3",
+    "declaredLicense": "https://raw.githubusercontent.com/xunit/xunit/master/license.txt",
+    "notices": [
+      "xunit-source-LICENSE.txt"
+    ]
+  },
+  {
+    "package": "xunit.analyzers/1.18.0",
+    "declaredLicense": "Apache-2.0",
+    "notices": [
+      "xunit-source-LICENSE.txt"
+    ]
+  },
+  {
+    "package": "xunit.assert/2.9.3",
+    "declaredLicense": "Apache-2.0",
+    "notices": [
+      "xunit-source-LICENSE.txt"
+    ]
+  },
+  {
+    "package": "xunit.core/2.9.3",
+    "declaredLicense": "Apache-2.0",
+    "notices": [
+      "xunit-source-LICENSE.txt"
+    ]
+  },
+  {
+    "package": "xunit.extensibility.core/2.9.3",
+    "declaredLicense": "Apache-2.0",
+    "notices": [
+      "xunit-source-LICENSE.txt"
+    ]
+  },
+  {
+    "package": "xunit.extensibility.execution/2.9.3",
+    "declaredLicense": "Apache-2.0",
+    "notices": [
+      "xunit-source-LICENSE.txt"
+    ]
+  },
+  {
+    "package": "xunit.runner.visualstudio/3.1.4",
+    "declaredLicense": "Apache-2.0",
+    "notices": [
+      "xunit-source-LICENSE.txt"
+    ]
+  },
+  {
+    "package": "xunit/2.9.3",
+    "declaredLicense": "Apache-2.0",
+    "notices": [
+      "xunit-source-LICENSE.txt"
+    ]
+  }
+]

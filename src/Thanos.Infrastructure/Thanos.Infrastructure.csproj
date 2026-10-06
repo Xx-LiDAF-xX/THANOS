@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../Thanos.Core/Thanos.Core.csproj" />
+    <PackageReference Include="Microsoft.Data.Sqlite" />
+    <!-- Override the older native library bundled by Microsoft.Data.Sqlite. -->
+    <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" />
+    <EmbeddedResource Include="Storage/schema-v1.sql" />
+  </ItemGroup>
+</Project>

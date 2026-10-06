@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Xx-LiDAF-xX/THANOS/main/schemas/patch-schema-v1.json",
+  "title": "patch",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "patchId": {
+      "type": "string"
+    },
+    "patchFamily": {
+      "type": "string"
+    },
+    "gameFamily": {
+      "type": "string"
+    },
+    "titleIds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "gameVersions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "kytyVersions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "targetFile": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "signature": {
+      "type": "string",
+      "pattern": "^(?:[0-9a-fA-F]{2}|\\?\\?)(?: (?:[0-9a-fA-F]{2}|\\?\\?))*$"
+    },
+    "originalBytes": {
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{2}(?: [0-9a-fA-F]{2})*$"
+    },
+    "replacementBytes": {
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{2}(?: [0-9a-fA-F]{2})*$"
+    },
+    "location": {
+      "$ref": "common-schema-v1.json#/$defs/BinaryAddress"
+    },
+    "expectedMatches": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "reason": {
+      "type": "string"
+    },
+    "provenance": {
+      "$ref": "common-schema-v1.json#/$defs/Provenance"
+    },
+    "verificationRules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "risk": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "patchId",
+    "patchFamily",
+    "gameFamily",
+    "titleIds",
+    "gameVersions",
+    "kytyVersions",
+    "targetFile",
+    "sha256",
+    "signature",
+    "originalBytes",
+    "replacementBytes",
+    "location",
+    "expectedMatches",
+    "reason",
+    "provenance",
+    "verificationRules",
+    "risk"
+  ],
+  "additionalProperties": false
+}

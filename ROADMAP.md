@@ -1,0 +1,15 @@
+# Development roadmap
+
+| Phase / target version | Work | Exit criteria |
+| --- | --- | --- |
+| 1 / 0.1.0 | Repository, .NET solution, cross-platform contracts, CLI and Avalonia shells, models, SQLite, fingerprints, initial log parser, schemas and CI | Build and test matrix green; JSON exports preserve raw evidence/unknowns; no game modification or emulator execution |
+| 2 / 0.2.0 | Error signatures, correlation, root-cause candidates, full accessible binary analysis, family relationships, patch-family knowledge and provenance import/export | Guarded ELF address mapping; evidence-backed hypotheses; no family inference from similar IDs alone; malformed-input tests |
+| 3 / 0.3.0 | Prompt templates/modes, evidence packaging, readiness scoring and CLI/GUI prompt export | External-AI prompts expose missing evidence and require UNKNOWN when insufficient; no embedded model or fabricated compatibility claims |
+| 4 / 0.4.0 | Patch import, normalization, schema/hash/signature/range validation, working-copy backup, transaction and rollback | No automatic AI script execution; ambiguous targets rejected; original game untouched; explicit approval and recoverable transactions |
+| 5 / 0.5.0 | Build-specific capability adapters, process runner, scenario definitions, bounded stdout/stderr/log capture, baseline/candidate comparison and verification levels 0–7 | No guessed options; real scenario evidence for PASS; timeout/cancellation cleanups; missing proof produces INCONCLUSIVE |
+| 6 / 0.6.0 | Metrics, optimization prompts, portability, regression database, compatibility matrix and knowledge graph | Exact build/hardware context; measured stability before optimization; no offset reuse without validating corresponding code |
+| 7 / 1.0.0 | UI/CLI polish, accessible richer panels, documentation, self-contained platform packages and release automation | Windows ZIP/installer, Linux AppImage/tar.gz, macOS .app/DMG; runtime included; checksums/notices/source availability; signing policy and repeatable releases |
+
+Phase 1 supplies wire contracts for future models; it does not implement their behavior. Initial capability discovery only hashes the selected file and explicitly returns UNKNOWN. Subsequent detection must be tied to the actual installed build and adapt to Kyty forks through IKytyAdapter.
+
+Each phase builds on the prior architecture, adds meaningful unit/integration checks, preserves published schema versions and reports actual verification. Native UI appearance and emulator availability must be validated on each supported OS. A passing application build alone is not game compatibility evidence.

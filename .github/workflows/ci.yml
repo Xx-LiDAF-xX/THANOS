@@ -1,0 +1,56 @@
+name: Build, test and validate
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows-x64
+          - os: ubuntu-24.04
+            platform: linux-x64
+          - os: macos-15-intel
+            platform: macos-x64
+          - os: macos-15
+            platform: macos-arm64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: dotnet restore THANOS.sln --locked-mode
+      - run: dotnet build THANOS.sln -c Release --no-restore
+      - run: dotnet format THANOS.sln --no-restore --verify-no-changes
+      - run: dotnet test THANOS.sln -c Release --no-build --logger trx --results-directory TestResults
+      - run: python -m pip install -r tools/requirements.txt
+      - run: python tools/generate_schemas.py --check
+      - run: python tools/validate_schemas.py
+      - run: dotnet publish src/Thanos.Cli -c Release --no-restore --self-contained false -o artifacts/cli
+      - run: dotnet publish src/Thanos.Desktop -c Release --no-restore --self-contained false -o artifacts/desktop
+      - name: Validate published CLI and package notices
+        run: |
+          python tools/validate_schemas.py --cli artifacts/cli/kytyfixer.dll
+          python tools/package_artifacts.py artifacts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: thanos-phase1-${{ matrix.platform }}
+          path: artifacts/THANOS-phase1.zip
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ matrix.platform }}
+          path: TestResults

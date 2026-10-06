@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "leftBuild": "synthetic-build-a",
+  "rightBuild": "synthetic-build-b",
+  "strength": "unknown",
+  "evidence": [],
+  "confidence": 0.0,
+  "provenance": {
+    "source": "synthetic fixture",
+    "author": null,
+    "date": "2026-10-06T00:00:00Z",
+    "kytyVersion": null,
+    "gameVersion": null,
+    "hardware": null,
+    "status": "unverified"
+  }
+}

@@ -1,0 +1,3 @@
+# Tests
+
+Run `dotnet test THANOS.sln -c Release` from the repository root. Evidence tests cover ELF class/byte order, malformed/protected input, hashes, discovery ambiguity, cancellation, raw logs, limits, address spaces and unknown emulator capabilities. Storage tests cover migrations, future-version rejection, foreign keys, SQL-identifier injection, immutable analysis IDs and JSON round trips. Schema tests compare compiling models against checked-in wire properties. tools/validate_schemas.py adds actual CLI/published-output integration. Fixtures are synthetic; no copyrighted game assets are required.

@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Xx-LiDAF-xX/THANOS/main/schemas/error-signature-schema-v1.json",
+  "title": "error-signature",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "id": {
+      "type": "string"
+    },
+    "containsAll": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "boot",
+        "elf",
+        "loader",
+        "module",
+        "syscall",
+        "memory",
+        "thread",
+        "timing",
+        "filesystem",
+        "graphics",
+        "vulkan",
+        "shader",
+        "gpu",
+        "driver",
+        "audio",
+        "video",
+        "network",
+        "input",
+        "presentation",
+        "gamePatch",
+        "versionMismatch",
+        "performance",
+        "environment",
+        "unknown"
+      ]
+    },
+    "hypothesis": {
+      "type": "string"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "provenance": {
+      "$ref": "common-schema-v1.json#/$defs/Provenance"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "containsAll",
+    "category",
+    "hypothesis",
+    "confidence",
+    "provenance"
+  ],
+  "additionalProperties": false
+}

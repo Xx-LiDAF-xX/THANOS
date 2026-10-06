@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "example-unsupported-shader-family",
+  "containsAll": ["unsupported", "family=MIMG"],
+  "category": "shader",
+  "hypothesis": "An unsupported shader instruction may require an emulator-side investigation. This synthetic example is not a confirmed Kyty finding.",
+  "confidence": 0.0,
+  "provenance": {
+    "source": "synthetic fixture",
+    "author": null,
+    "date": "2026-10-06T00:00:00Z",
+    "kytyVersion": null,
+    "gameVersion": null,
+    "hardware": null,
+    "status": "unverified"
+  }
+}

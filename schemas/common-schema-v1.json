@@ -1,0 +1,208 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Xx-LiDAF-xX/THANOS/main/schemas/common-schema-v1.json",
+  "title": "common",
+  "$defs": {
+    "Evidence": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "detail": {
+          "type": "string"
+        },
+        "lineNumber": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "source",
+        "detail",
+        "lineNumber"
+      ],
+      "additionalProperties": false
+    },
+    "Provenance": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "author": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "kytyVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "gameVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "hardware": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "unverified",
+            "communityReported",
+            "repeated",
+            "confirmed",
+            "toolVerified"
+          ]
+        }
+      },
+      "required": [
+        "source",
+        "author",
+        "date",
+        "kytyVersion",
+        "gameVersion",
+        "hardware",
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "BinaryAddress": {
+      "type": "object",
+      "properties": {
+        "addressSpace": {
+          "type": "string",
+          "enum": [
+            "fileOffset",
+            "virtualAddress",
+            "runtimeAddress",
+            "relativeAddress"
+          ]
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^0x[0-9a-fA-F]+$"
+        }
+      },
+      "required": [
+        "addressSpace",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "BinarySection": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "offset": {
+          "$ref": "common-schema-v1.json#/$defs/BinaryAddress"
+        },
+        "address": {
+          "$ref": "common-schema-v1.json#/$defs/BinaryAddress"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "name",
+        "offset",
+        "address",
+        "size"
+      ],
+      "additionalProperties": false
+    },
+    "BinarySegment": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "offset": {
+          "$ref": "common-schema-v1.json#/$defs/BinaryAddress"
+        },
+        "address": {
+          "$ref": "common-schema-v1.json#/$defs/BinaryAddress"
+        },
+        "fileSize": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "memorySize": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "type",
+        "offset",
+        "address",
+        "fileSize",
+        "memorySize"
+      ],
+      "additionalProperties": false
+    },
+    "KytyCapability": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "arguments": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "evidence": {
+          "$ref": "common-schema-v1.json#/$defs/Evidence"
+        }
+      },
+      "required": [
+        "name",
+        "arguments",
+        "evidence"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

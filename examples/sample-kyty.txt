@@ -1,0 +1,7 @@
+Kyty version: synthetic-test-build
+Title ID: TEST00001
+CPU: synthetic CPU
+GPU: synthetic GPU
+ShaderCFG.cpp:40 fatal unsupported family=MIMG PC=0x123
+Vulkan error VK_ERROR_DEVICE_LOST
+Process terminated

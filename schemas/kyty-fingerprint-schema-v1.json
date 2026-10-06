@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Xx-LiDAF-xX/THANOS/main/schemas/kyty-fingerprint-schema-v1.json",
+  "title": "kyty-fingerprint",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "executablePath": {
+      "type": "string"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "fileSize": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "architecture": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "$ref": "common-schema-v1.json#/$defs/KytyCapability"
+      }
+    },
+    "capabilityStatus": {
+      "type": "string",
+      "enum": [
+        "Unknown",
+        "Detected"
+      ]
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "common-schema-v1.json#/$defs/Evidence"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "executablePath",
+    "sha256",
+    "fileSize",
+    "version",
+    "architecture",
+    "capabilities",
+    "capabilityStatus",
+    "evidence",
+    "limitations"
+  ],
+  "additionalProperties": false
+}

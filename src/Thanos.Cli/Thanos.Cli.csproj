@@ -1,0 +1,4 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><AssemblyName>kytyfixer</AssemblyName></PropertyGroup>
+  <ItemGroup><ProjectReference Include="../Thanos.Infrastructure/Thanos.Infrastructure.csproj" /></ItemGroup>
+</Project>

@@ -1,0 +1,90 @@
+"""Validate every schema offline and exercise the real CLI against synthetic evidence."""
+import argparse
+import copy
+import hashlib
+import json
+import struct
+import subprocess
+import tempfile
+from pathlib import Path
+
+from jsonschema import Draft202012Validator
+from referencing import Registry, Resource
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--dotnet", default="dotnet")
+    parser.add_argument("--cli", type=Path, default=ROOT / "src/Thanos.Cli/bin/Release/net10.0/kytyfixer.dll")
+    args = parser.parse_args()
+    schemas = {}
+    registry = Registry()
+    for path in sorted((ROOT / "schemas").glob("*.json")):
+        schema = json.loads(path.read_text(encoding="utf-8"))
+        Draft202012Validator.check_schema(schema)
+        schemas[path.name] = schema
+        registry = registry.with_resource(schema["$id"], Resource.from_contents(schema))
+
+    def validate(name, data):
+        Draft202012Validator(schemas[f"{name}-schema-v1.json"], registry=registry).validate(data)
+
+    def run(*arguments, expected=0):
+        result = subprocess.run([args.dotnet, str(args.cli), *map(str, arguments)], capture_output=True, text=True, encoding="utf-8", timeout=30, cwd=ROOT)
+        if result.returncode != expected:
+            raise AssertionError(f"CLI {arguments}: expected exit {expected}, got {result.returncode}: {result.stderr}")
+        return result
+
+    validate("error-signature", json.loads((ROOT / "examples/error-signature.json").read_text()))
+    validate("family-relationship", json.loads((ROOT / "examples/family-relationship.json").read_text()))
+    with tempfile.TemporaryDirectory(prefix="thanos-cli-") as temporary:
+        directory = Path(temporary)
+        game = directory / "game with spaces.elf"
+        data = bytearray(64)
+        data[:7] = b"\x7fELF\x02\x01\x01"
+        struct.pack_into("<HHI", data, 16, 2, 62, 1)
+        struct.pack_into("<Q", data, 24, 0x401000)
+        struct.pack_into("<H", data, 52, 64)
+        game.write_bytes(data)
+        expected_hash = hashlib.sha256(data).hexdigest()
+        log = ROOT / "examples/sample-kyty.txt"
+        fingerprint = json.loads(run("fingerprint", game).stdout)
+        validate("game", fingerprint)
+        assert fingerprint["sha256"] == expected_hash
+        assert fingerprint["titleId"] is None
+        assert fingerprint["confidence"] == 0
+        kyty = json.loads(run("detect-kyty", game).stdout)
+        validate("kyty-fingerprint", kyty)
+        assert kyty["capabilities"] == [] and kyty["version"] is None
+        parsed = json.loads(run("parse-log", log).stdout)
+        validate("parsed-log", parsed)
+        assert parsed["sha256"] == hashlib.sha256(log.read_bytes()).hexdigest()
+        assert len(parsed["events"]) == 7
+        report = json.loads(run("analyze", game, "--kyty", game, "--log", log).stdout)
+        validate("analysis", report)
+        minimal = json.loads(run("analyze", game).stdout)
+        validate("analysis", minimal)
+        assert minimal["kyty"] is None and minimal["log"] is None
+        database = directory / "knowledge.db"
+        saved = run("analyze", game, "--log", log, "--database", database)
+        identifier = saved.stderr.strip().removeprefix("Saved analysis: ")
+        exported = json.loads(run("database", "export", database, identifier).stdout)
+        validate("analysis", exported)
+        assert exported == json.loads(saved.stdout)
+        assert game.read_bytes() == data
+        run("fingerprint", directory / "missing", expected=3)
+        run("apply-patch", "proposal.json", expected=2)
+        run("analyze", game, "--log", log, "--log", log, expected=2)
+        run("analyze", game, "--unknown", "value", expected=2)
+        invalid = copy.deepcopy(report)
+        invalid["schemaVersion"] = 99
+        assert not Draft202012Validator(schemas["analysis-schema-v1.json"], registry=registry).is_valid(invalid)
+        invalid = copy.deepcopy(fingerprint)
+        invalid["sha256"] = "fabricated"
+        assert not Draft202012Validator(schemas["game-schema-v1.json"], registry=registry).is_valid(invalid)
+    print(f"Validated {len(schemas)} schemas, synthetic examples, and CLI/storage integration.")
+
+
+if __name__ == "__main__":
+    main()

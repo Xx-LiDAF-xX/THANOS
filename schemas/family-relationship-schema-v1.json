@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Xx-LiDAF-xX/THANOS/main/schemas/family-relationship-schema-v1.json",
+  "title": "family-relationship",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "leftBuild": {
+      "type": "string"
+    },
+    "rightBuild": {
+      "type": "string"
+    },
+    "strength": {
+      "type": "string",
+      "enum": [
+        "exactFamily",
+        "strong",
+        "probable",
+        "weak",
+        "unknown"
+      ]
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "common-schema-v1.json#/$defs/Evidence"
+      }
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "provenance": {
+      "$ref": "common-schema-v1.json#/$defs/Provenance"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "leftBuild",
+    "rightBuild",
+    "strength",
+    "evidence",
+    "confidence",
+    "provenance"
+  ],
+  "additionalProperties": false
+}

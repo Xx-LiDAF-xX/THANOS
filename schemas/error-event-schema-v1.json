@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Xx-LiDAF-xX/THANOS/main/schemas/error-event-schema-v1.json",
+  "title": "error-event",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "eventType": {
+      "type": "string"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "information",
+        "warning",
+        "error",
+        "fatal"
+      ]
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "boot",
+        "elf",
+        "loader",
+        "module",
+        "syscall",
+        "memory",
+        "thread",
+        "timing",
+        "filesystem",
+        "graphics",
+        "vulkan",
+        "shader",
+        "gpu",
+        "driver",
+        "audio",
+        "video",
+        "network",
+        "input",
+        "presentation",
+        "gamePatch",
+        "versionMismatch",
+        "performance",
+        "environment",
+        "unknown"
+      ]
+    },
+    "subsystem": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    },
+    "opcode": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "programCounter": {
+      "anyOf": [
+        {
+          "$ref": "common-schema-v1.json#/$defs/BinaryAddress"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "sourceFile": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "sourceLine": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "lineNumber": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "rawLine": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "eventType",
+    "severity",
+    "category",
+    "subsystem",
+    "message",
+    "opcode",
+    "programCounter",
+    "sourceFile",
+    "sourceLine",
+    "lineNumber",
+    "rawLine"
+  ],
+  "additionalProperties": false
+}

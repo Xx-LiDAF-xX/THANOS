@@ -1,0 +1,220 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Xx-LiDAF-xX/THANOS/main/schemas/game-schema-v1.json",
+  "title": "game",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "gameFamily": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "titleId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "titleIds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "titleName": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "region": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "gameVersion": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "buildVersion": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "engine": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "engineVersion": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "executablePath": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "sha256": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "fileSize": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "architecture": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "entryPoint": {
+      "anyOf": [
+        {
+          "$ref": "common-schema-v1.json#/$defs/BinaryAddress"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "elfType": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "sections": {
+      "type": "array",
+      "items": {
+        "$ref": "common-schema-v1.json#/$defs/BinarySection"
+      }
+    },
+    "segments": {
+      "type": "array",
+      "items": {
+        "$ref": "common-schema-v1.json#/$defs/BinarySegment"
+      }
+    },
+    "modules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "metadataSources": {
+      "type": "array",
+      "items": {
+        "$ref": "common-schema-v1.json#/$defs/Evidence"
+      }
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "partial",
+        "complete"
+      ]
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "gameFamily",
+    "titleId",
+    "titleIds",
+    "titleName",
+    "region",
+    "gameVersion",
+    "buildVersion",
+    "engine",
+    "engineVersion",
+    "executablePath",
+    "sha256",
+    "fileSize",
+    "architecture",
+    "entryPoint",
+    "elfType",
+    "sections",
+    "segments",
+    "modules",
+    "metadataSources",
+    "confidence",
+    "status",
+    "limitations"
+  ],
+  "additionalProperties": false
+}

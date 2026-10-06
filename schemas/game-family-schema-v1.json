@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Xx-LiDAF-xX/THANOS/main/schemas/game-family-schema-v1.json",
+  "title": "game-family",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "titleIds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "engine": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "provenance": {
+      "$ref": "common-schema-v1.json#/$defs/Provenance"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "name",
+    "titleIds",
+    "engine",
+    "provenance"
+  ],
+  "additionalProperties": false
+}

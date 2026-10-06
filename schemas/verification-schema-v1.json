@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Xx-LiDAF-xX/THANOS/main/schemas/verification-schema-v1.json",
+  "title": "verification",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "id": {
+      "type": "string"
+    },
+    "gameFamilyId": {
+      "type": "string"
+    },
+    "binarySha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "kytySha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "patchId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "scenario": {
+      "type": "string",
+      "enum": [
+        "BOOT",
+        "MENU",
+        "GAMEPLAY",
+        "CRASH REPRODUCTION",
+        "STABILITY",
+        "PERFORMANCE"
+      ]
+    },
+    "level": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 7
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "pass",
+        "fail",
+        "improved",
+        "regressed",
+        "inconclusive"
+      ]
+    },
+    "baselineLog": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "candidateLog": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "provenance": {
+      "$ref": "common-schema-v1.json#/$defs/Provenance"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "gameFamilyId",
+    "binarySha256",
+    "kytySha256",
+    "patchId",
+    "scenario",
+    "level",
+    "outcome",
+    "baselineLog",
+    "candidateLog",
+    "metrics",
+    "provenance"
+  ],
+  "additionalProperties": false
+}
