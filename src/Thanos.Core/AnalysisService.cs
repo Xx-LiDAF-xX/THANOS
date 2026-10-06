@@ -8,6 +8,6 @@ public sealed class AnalysisService(IGameFingerprinter games, IKytyCapabilityDet
         var emulator = kyty is null ? null : await kytyDetector.DetectAsync(kyty, cancellationToken);
         var parsedLog = log is null ? null : await logs.ParseAsync(log, cancellationToken);
         return new AnalysisReport(1, fingerprint, emulator, parsedLog,
-            ["Phase 1 collects evidence only. Root-cause analysis, family matching, prompts, patches and emulator execution are not implemented."]);
+            ["Basic evidence report. Use Phase 2 research/diagnose for binary inspection, log correlation and knowledge lookup. Prompts, patches and emulator execution are not implemented."]);
     }
 }

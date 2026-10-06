@@ -2,6 +2,7 @@
   <PropertyGroup><IsPackable>false</IsPackable><IsTestProject>true</IsTestProject></PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/Thanos.Infrastructure/Thanos.Infrastructure.csproj" />
+    <ProjectReference Include="../../src/Thanos.Desktop/Thanos.Desktop.csproj" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio"><PrivateAssets>all</PrivateAssets></PackageReference>

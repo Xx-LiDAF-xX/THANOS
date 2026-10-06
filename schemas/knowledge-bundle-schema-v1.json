@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Xx-LiDAF-xX/THANOS/main/schemas/knowledge-bundle-schema-v1.json",
+  "title": "knowledge-bundle",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "families": {
+      "type": "array",
+      "items": {
+        "$ref": "game-family-schema-v1.json"
+      }
+    },
+    "bindings": {
+      "type": "array",
+      "items": {
+        "$ref": "common-schema-v1.json#/$defs/FamilyBinding"
+      }
+    },
+    "patchFamilies": {
+      "type": "array",
+      "items": {
+        "$ref": "patch-family-schema-v1.json"
+      }
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "$ref": "knowledge-entry-schema-v1.json"
+      }
+    },
+    "errorSignatures": {
+      "type": "array",
+      "items": {
+        "$ref": "error-signature-schema-v1.json"
+      }
+    },
+    "relationships": {
+      "type": "array",
+      "items": {
+        "$ref": "family-relationship-schema-v1.json"
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "families",
+    "bindings",
+    "patchFamilies",
+    "entries",
+    "errorSignatures",
+    "relationships"
+  ],
+  "additionalProperties": false
+}

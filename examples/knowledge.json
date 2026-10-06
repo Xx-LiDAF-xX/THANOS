@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "schemaVersion": 1,
+      "id": "synthetic-family",
+      "name": "Synthetic example, not a real compatibility claim",
+      "titleIds": [],
+      "engine": null,
+      "provenance": {
+        "source": "synthetic fixture",
+        "author": null,
+        "date": "2026-10-06T00:00:00Z",
+        "kytyVersion": null,
+        "gameVersion": null,
+        "hardware": null,
+        "status": "unverified"
+      }
+    }
+  ],
+  "bindings": [],
+  "patchFamilies": [],
+  "entries": [],
+  "errorSignatures": [],
+  "relationships": []
+}

@@ -203,6 +203,294 @@
         "evidence"
       ],
       "additionalProperties": false
+    },
+    "SymbolInfo": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "address": {
+          "$ref": "common-schema-v1.json#/$defs/BinaryAddress"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "binding": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "sectionIndex": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "isImport": {
+          "type": "boolean"
+        },
+        "isExport": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "address",
+        "size",
+        "binding",
+        "type",
+        "sectionIndex",
+        "isImport",
+        "isExport"
+      ],
+      "additionalProperties": false
+    },
+    "RelocationInfo": {
+      "type": "object",
+      "properties": {
+        "location": {
+          "$ref": "common-schema-v1.json#/$defs/BinaryAddress"
+        },
+        "type": {
+          "type": "string"
+        },
+        "symbol": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "addend": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "location",
+        "type",
+        "symbol",
+        "addend"
+      ],
+      "additionalProperties": false
+    },
+    "BinaryString": {
+      "type": "object",
+      "properties": {
+        "location": {
+          "$ref": "common-schema-v1.json#/$defs/BinaryAddress"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "location",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "CodeSignature": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "common-schema-v1.json#/$defs/BinaryAddress"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "section",
+            "segment",
+            "symbolFunction"
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "location",
+        "size",
+        "sha256",
+        "kind"
+      ],
+      "additionalProperties": false
+    },
+    "LoadMapping": {
+      "type": "object",
+      "properties": {
+        "offset": {
+          "$ref": "common-schema-v1.json#/$defs/BinaryAddress"
+        },
+        "address": {
+          "$ref": "common-schema-v1.json#/$defs/BinaryAddress"
+        },
+        "fileSize": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "memorySize": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "flags": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        }
+      },
+      "required": [
+        "offset",
+        "address",
+        "fileSize",
+        "memorySize",
+        "flags"
+      ],
+      "additionalProperties": false
+    },
+    "SignatureMatch": {
+      "type": "object",
+      "properties": {
+        "signatureId": {
+          "type": "string"
+        },
+        "lineNumber": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "hypothesis": {
+          "type": "string"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "provenance": {
+          "$ref": "common-schema-v1.json#/$defs/Provenance"
+        }
+      },
+      "required": [
+        "signatureId",
+        "lineNumber",
+        "hypothesis",
+        "confidence",
+        "provenance"
+      ],
+      "additionalProperties": false
+    },
+    "CorrelationLink": {
+      "type": "object",
+      "properties": {
+        "fromLine": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "toLine": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "relationship": {
+          "type": "string"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "common-schema-v1.json#/$defs/Evidence"
+          }
+        }
+      },
+      "required": [
+        "fromLine",
+        "toLine",
+        "relationship",
+        "confidence",
+        "evidence"
+      ],
+      "additionalProperties": false
+    },
+    "FamilyBinding": {
+      "type": "object",
+      "properties": {
+        "executableSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "gameFamilyId": {
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "common-schema-v1.json#/$defs/Provenance"
+        }
+      },
+      "required": [
+        "executableSha256",
+        "gameFamilyId",
+        "provenance"
+      ],
+      "additionalProperties": false
+    },
+    "ChangedRange": {
+      "type": "object",
+      "properties": {
+        "offset": {
+          "$ref": "common-schema-v1.json#/$defs/BinaryAddress"
+        },
+        "originalSize": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "candidateSize": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "originalBytes": {
+          "type": "string"
+        },
+        "candidateBytes": {
+          "type": "string"
+        },
+        "beforeContext": {
+          "type": "string"
+        },
+        "afterContext": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "offset",
+        "originalSize",
+        "candidateSize",
+        "originalBytes",
+        "candidateBytes",
+        "beforeContext",
+        "afterContext"
+      ],
+      "additionalProperties": false
     }
   }
 }

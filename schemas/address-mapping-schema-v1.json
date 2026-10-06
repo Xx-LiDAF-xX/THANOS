@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Xx-LiDAF-xX/THANOS/main/schemas/address-mapping-schema-v1.json",
+  "title": "address-mapping",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "input": {
+      "$ref": "common-schema-v1.json#/$defs/BinaryAddress"
+    },
+    "output": {
+      "anyOf": [
+        {
+          "$ref": "common-schema-v1.json#/$defs/BinaryAddress"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Mapped",
+        "Unknown"
+      ]
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "common-schema-v1.json#/$defs/Evidence"
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "input",
+    "output",
+    "status",
+    "evidence"
+  ],
+  "additionalProperties": false
+}

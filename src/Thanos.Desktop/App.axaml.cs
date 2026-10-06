@@ -13,7 +13,7 @@ public sealed partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            desktop.MainWindow = new MainWindow { DataContext = new MainViewModel(ServiceFactory.CreateAnalysisService()) };
+            desktop.MainWindow = new MainWindow { DataContext = new MainViewModel(ServiceFactory.CreateResearchService()) };
         }
         base.OnFrameworkInitializationCompleted();
     }

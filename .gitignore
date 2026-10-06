@@ -9,3 +9,4 @@ artifacts/
 *.db-wal
 *.user
 *.log
+**/__pycache__/

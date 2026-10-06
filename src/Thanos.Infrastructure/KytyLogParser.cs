@@ -14,6 +14,7 @@ public sealed class KytyLogParser(IFileSystem files, IPathService paths) : ILogP
     private static readonly Regex Pc = new(@"\b(?:PC|RIP)\s*[:=]\s*(0x[0-9a-fA-F]+)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, RegexTimeout);
     private static readonly Regex Opcode = new(@"\bfamily\s*=\s*([A-Za-z0-9_]+)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, RegexTimeout);
     private static readonly Regex Source = new(@"([A-Za-z0-9_./\\-]+\.(?:cpp|cc|c|h))[:(](\d+)\)?", RegexOptions.CultureInvariant, RegexTimeout);
+    private static readonly Regex NegatedFailure = new(@"\b(?:no|zero|0)\s+(?:(?:fatal|shader|vulkan|loader)\s+)?(?:errors?|failures?|warnings?)\b|\bno\s+unsupported\s+(?:instructions?|opcodes?|features?)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, RegexTimeout);
 
     public async Task<ParsedLog> ParseAsync(string path, CancellationToken cancellationToken = default)
     {
@@ -63,22 +64,24 @@ public sealed class KytyLogParser(IFileSystem files, IPathService paths) : ILogP
                 if (key.Equals("Title ID", StringComparison.OrdinalIgnoreCase)) { title = value; }
                 if (new[] { "CPU", "GPU", "GPU driver", "RAM", "VRAM" }.Contains(key, StringComparer.OrdinalIgnoreCase)) { hardware[key.ToLowerInvariant()] = value; }
             }
-            var severity = Contains(line, "fatal") || Contains(line, "assertion") ? Severity.Fatal
-                : Contains(line, "error") || Contains(line, "failed") || Contains(line, "unsupported") ? Severity.Error
-                : Contains(line, "warning") || Contains(line, "warn") ? Severity.Warning : Severity.Information;
+            var severityText = NegatedFailure.Replace(line, "");
+            var severity = Contains(severityText, "fatal") || Contains(severityText, "assertion") ? Severity.Fatal
+                : Contains(severityText, "error") || Contains(severityText, "failed") || Contains(severityText, "unsupported") || Contains(severityText, "unimplemented") || Contains(severityText, "access violation") ? Severity.Error
+                : Contains(severityText, "warning") || Contains(severityText, "warn") ? Severity.Warning : Severity.Information;
             var category = Category(line);
+            var termination = Contains(line, "process terminated") || Contains(line, "segmentation fault") || Contains(line, "aborted");
             var source = Source.Match(line);
             var pc = Pc.Match(line);
             var opcode = Opcode.Match(line);
             events.Add(new ErrorEvent
             {
-                EventType = severity == Severity.Information ? "LogLine" : category + "Error",
-                Severity = severity,
+                EventType = termination ? "Termination" : severity == Severity.Information ? "LogLine" : category + "Error",
+                Severity = termination ? Severity.Fatal : severity,
                 Category = category,
                 Subsystem = category.ToString(),
                 Message = line,
                 Opcode = opcode.Success ? opcode.Groups[1].Value : null,
-                ProgramCounter = pc.Success ? new BinaryAddress(AddressSpace.RuntimeAddress, pc.Groups[1].Value) : null,
+                ProgramCounter = pc.Success ? new BinaryAddress(AddressSpace.RuntimeAddress, pc.Groups[1].Value.ToLowerInvariant()) : null,
                 SourceFile = source.Success ? source.Groups[1].Value : null,
                 SourceLine = source.Success && int.TryParse(source.Groups[2].Value, out var sourceLine) && sourceLine > 0 ? sourceLine : null,
                 LineNumber = lineNumber,

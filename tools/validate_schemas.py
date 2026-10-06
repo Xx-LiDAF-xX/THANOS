@@ -10,6 +10,7 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
+from elf_fixture import create as create_elf
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -38,6 +39,7 @@ def main():
 
     validate("error-signature", json.loads((ROOT / "examples/error-signature.json").read_text()))
     validate("family-relationship", json.loads((ROOT / "examples/family-relationship.json").read_text()))
+    validate("knowledge-bundle", json.loads((ROOT / "examples/knowledge.json").read_text()))
     with tempfile.TemporaryDirectory(prefix="thanos-cli-") as temporary:
         directory = Path(temporary)
         game = directory / "game with spaces.elf"
@@ -83,6 +85,66 @@ def main():
         invalid = copy.deepcopy(fingerprint)
         invalid["sha256"] = "fabricated"
         assert not Draft202012Validator(schemas["game-schema-v1.json"], registry=registry).is_valid(invalid)
+
+        executable = directory / "research.elf"
+        executable.write_bytes(create_elf())
+        inspected = json.loads(run("binary-info", executable).stdout)
+        validate("binary-inspection", inspected)
+        assert inspected["status"] == "inspected"
+        assert len(inspected["loadMappings"]) == 1
+        assert any(s["name"] == ".bss" for s in inspected["fingerprint"]["sections"])
+        mapped = json.loads(run("map-address", executable, "virtualAddress", "0x400108", "fileOffset").stdout)
+        validate("address-mapping", mapped)
+        assert mapped["output"]["value"] == "0x108"
+        zero_fill = json.loads(run("map-address", executable, "virtualAddress", "0x400140", "fileOffset").stdout)
+        validate("address-mapping", zero_fill)
+        assert zero_fill["output"] is None
+        no_bias = json.loads(run("map-address", executable, "runtimeAddress", "0x500108", "fileOffset").stdout)
+        validate("address-mapping", no_bias)
+        assert no_bias["output"] is None
+        with_bias = json.loads(run("map-address", executable, "runtimeAddress", "0x500108", "fileOffset", "0x100000").stdout)
+        validate("address-mapping", with_bias)
+        assert with_bias["output"]["value"] == "0x108"
+        relation = json.loads(run("compare-builds", executable, executable).stdout)
+        validate("family-relationship", relation)
+        assert relation["strength"] == "strong"
+        candidate = directory / "candidate.elf"
+        changed = create_elf()
+        changed[300] ^= 1
+        candidate.write_bytes(changed)
+        difference = json.loads(run("diff-binaries", executable, candidate).stdout)
+        validate("binary-difference", difference)
+        assert difference["changedBytes"] == 1 and difference["ranges"][0]["offset"]["value"] == "0x12c"
+        research = json.loads(run("diagnose", executable, "--log", log, "--related", candidate).stdout)
+        validate("research", research)
+        assert research["diagnosis"]["primaryFailure"]["category"] == "shader"
+        assert len(research["diagnosis"]["secondaryFailures"]) == 2
+        assert research["diagnosis"]["candidates"][0]["layer"] == "KYTY EMULATOR / SHADER"
+        assert research["relatedBuilds"][0]["strength"] == "unknown"
+        knowledge = json.loads((ROOT / "examples/knowledge.json").read_text())
+        provenance = knowledge["families"][0]["provenance"]
+        provenance["date"] = "2026-10-06T00:00:00+00:00"  # Canonical DateTimeOffset representation of the same instant.
+        knowledge["bindings"] = [{"executableSha256": inspected["fingerprint"]["sha256"], "gameFamilyId": "synthetic-family", "provenance": provenance}]
+        knowledge["entries"] = [{"schemaVersion": 1, "id": "example-claim", "gameFamilyId": "synthetic-family", "kind": "issue", "summary": "Synthetic unverified issue", "executableHashes": [], "signatureIds": ["shader-unsupported"], "provenance": provenance}]
+        knowledge_path = directory / "knowledge.json"
+        knowledge_path.write_text(json.dumps(knowledge), encoding="utf-8")
+        validate("knowledge-bundle", knowledge)
+        run("knowledge", "import", database, knowledge_path)
+        exported_knowledge = json.loads(run("knowledge", "export", database).stdout)
+        validate("knowledge-bundle", exported_knowledge)
+        assert exported_knowledge == knowledge
+        saved_research = run("diagnose", executable, "--log", log, "--database", database)
+        identifier = saved_research.stderr.strip().removeprefix("Saved research: ")
+        reloaded = json.loads(run("database", "export-research", database, identifier).stdout)
+        validate("research", reloaded)
+        assert reloaded == json.loads(saved_research.stdout)
+        assert reloaded["evidence"]["game"]["gameFamily"] is None
+        assert reloaded["knownIssues"][0]["provenance"]["status"] == "unverified"
+        assert executable.read_bytes() == create_elf()
+        run("knowledge", "import", database, knowledge_path, expected=3)
+        run("diagnose", executable, "--knowledge", knowledge_path, "--database", database, expected=2)
+        run("map-address", executable, "invalid", "0x1", "fileOffset", expected=2)
+        run("map-address", executable, "virtualAddress", "-1", "fileOffset", expected=3)
     print(f"Validated {len(schemas)} schemas, synthetic examples, and CLI/storage integration.")
 
 

@@ -1,5 +1,7 @@
 # Development roadmap
 
+Current implementation: Phases 1 and 2. Phase 2 delivers guarded accessible ELF inspection and conservative diagnosis/relationship hypotheses. Sectionless dynamic-symbol recovery, compressed sections, instruction disassembly and statistical/function-structure similarity remain explicit binary limitations; unsupported content continues through partial/log analysis. Phase 3 is next and is not included in 0.2.0.
+
 | Phase / target version | Work | Exit criteria |
 | --- | --- | --- |
 | 1 / 0.1.0 | Repository, .NET solution, cross-platform contracts, CLI and Avalonia shells, models, SQLite, fingerprints, initial log parser, schemas and CI | Build and test matrix green; JSON exports preserve raw evidence/unknowns; no game modification or emulator execution |

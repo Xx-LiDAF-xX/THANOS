@@ -1,12 +1,14 @@
-"""Package Phase 1 framework-dependent outputs with sources of license notices."""
+"""Package framework-dependent outputs with source references and license notices."""
 import hashlib
 import shutil
 import subprocess
 import sys
 import zipfile
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+version = ET.parse(ROOT / "Directory.Build.props").findtext("PropertyGroup/Version")
 destination = Path(sys.argv[1] if len(sys.argv) > 1 else "artifacts")
 for project, assembly in [("cli", "kytyfixer"), ("desktop", "Thanos.Desktop")]:
     assert (destination / project / f"{assembly}.dll").is_file(), f"Missing {project} publication"
@@ -17,12 +19,12 @@ for project, assembly in [("cli", "kytyfixer"), ("desktop", "Thanos.Desktop")]:
     revision = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True, check=False).stdout.strip()
     source = "https://github.com/Xx-LiDAF-xX/THANOS"
     (destination / project / "SOURCE.txt").write_text(f"THANOS source (GPL-3.0-or-later): {source}\nRevision: {revision or 'uncommitted development snapshot'}\n")
-archive = shutil.make_archive(str(destination / "THANOS-phase1"), "zip", destination, "cli")
+archive = shutil.make_archive(str(destination / f"THANOS-{version}"), "zip", destination, "cli")
 # Include desktop in the same archive without archiving the ZIP itself.
 with zipfile.ZipFile(archive, "a", zipfile.ZIP_DEFLATED) as package:
     for file in sorted((destination / "desktop").rglob("*")):
         if file.is_file():
             package.write(file, file.relative_to(destination))
 checksum = hashlib.sha256(Path(archive).read_bytes()).hexdigest()
-Path(archive + ".sha256").write_text(checksum + "  THANOS-phase1.zip\n")
-print(f"Validated Phase 1 package: {archive}")
+Path(archive + ".sha256").write_text(checksum + f"  THANOS-{version}.zip\n")
+print(f"Validated application package: {archive}")

@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Xx-LiDAF-xX/THANOS/main/schemas/diagnosis-report-schema-v1.json",
+  "title": "diagnosis-report",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "primaryFailure": {
+      "anyOf": [
+        {
+          "$ref": "error-event-schema-v1.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "secondaryFailures": {
+      "type": "array",
+      "items": {
+        "$ref": "error-event-schema-v1.json"
+      }
+    },
+    "independentFailures": {
+      "type": "array",
+      "items": {
+        "$ref": "error-event-schema-v1.json"
+      }
+    },
+    "matches": {
+      "type": "array",
+      "items": {
+        "$ref": "common-schema-v1.json#/$defs/SignatureMatch"
+      }
+    },
+    "correlations": {
+      "type": "array",
+      "items": {
+        "$ref": "common-schema-v1.json#/$defs/CorrelationLink"
+      }
+    },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "$ref": "diagnosis-schema-v1.json"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "primaryFailure",
+    "secondaryFailures",
+    "independentFailures",
+    "matches",
+    "correlations",
+    "candidates",
+    "limitations"
+  ],
+  "additionalProperties": false
+}
