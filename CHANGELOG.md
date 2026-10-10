@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0 - Unreleased
+
+- Added eight external-AI prompt modes with complete research evidence, UNKNOWN rules and mode-specific requirements.
+- Added weighted evidence readiness, missing-evidence lists and baseline/candidate verification plans.
+- Added CLI fresh/saved analysis/research generation and desktop mode selection, copy/export and stale-result prevention.
+- Added atomic new-file prompt/evidence ZIP export with a SHA-256/size manifest and strict saved-report consistency checks.
+- Preserved existing evidence/prompt schemas and added evidence-package v1. No AI API, script execution or game modification.
+
 ## 0.2.0 — Unreleased
 
 - Reviewed the local KytyPS5 boot/loader/filesystem/shader/logging paths and documented their implications for research.

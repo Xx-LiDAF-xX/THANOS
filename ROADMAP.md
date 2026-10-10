@@ -1,6 +1,6 @@
 # Development roadmap
 
-Current implementation: Phases 1 and 2. Phase 2 delivers guarded accessible ELF inspection and conservative diagnosis/relationship hypotheses. Sectionless dynamic-symbol recovery, compressed sections, instruction disassembly and statistical/function-structure similarity remain explicit binary limitations; unsupported content continues through partial/log analysis. Phase 3 is next and is not included in 0.2.0.
+Current implementation: Phases 1�3. Phase 2 delivers guarded accessible ELF inspection and conservative diagnosis/relationship hypotheses. Sectionless dynamic-symbol recovery, compressed sections, instruction disassembly and statistical/function-structure similarity remain explicit binary limitations; unsupported content continues through partial/log analysis. Phase 3 adds deterministic external-AI requests and complete evidence exports in 0.3.0. Phase 4 patch validation/transactions is next.
 
 | Phase / target version | Work | Exit criteria |
 | --- | --- | --- |
@@ -8,7 +8,7 @@ Current implementation: Phases 1 and 2. Phase 2 delivers guarded accessible ELF 
 | 2 / 0.2.0 | Error signatures, correlation, root-cause candidates, full accessible binary analysis, family relationships, patch-family knowledge and provenance import/export | Guarded ELF address mapping; evidence-backed hypotheses; no family inference from similar IDs alone; malformed-input tests |
 | 3 / 0.3.0 | Prompt templates/modes, evidence packaging, readiness scoring and CLI/GUI prompt export | External-AI prompts expose missing evidence and require UNKNOWN when insufficient; no embedded model or fabricated compatibility claims |
 | 4 / 0.4.0 | Patch import, normalization, schema/hash/signature/range validation, working-copy backup, transaction and rollback | No automatic AI script execution; ambiguous targets rejected; original game untouched; explicit approval and recoverable transactions |
-| 5 / 0.5.0 | Build-specific capability adapters, process runner, scenario definitions, bounded stdout/stderr/log capture, baseline/candidate comparison and verification levels 0–7 | No guessed options; real scenario evidence for PASS; timeout/cancellation cleanups; missing proof produces INCONCLUSIVE |
+| 5 / 0.5.0 | Build-specific capability adapters, process runner, scenario definitions, incremental stdout/stderr/log capture without configured byte or line limits, baseline/candidate comparison and verification levels 0–7 | No guessed options; real scenario evidence for PASS; timeout/cancellation cleanups; missing proof produces INCONCLUSIVE |
 | 6 / 0.6.0 | Metrics, optimization prompts, portability, regression database, compatibility matrix and knowledge graph | Exact build/hardware context; measured stability before optimization; no offset reuse without validating corresponding code |
 | 7 / 1.0.0 | UI/CLI polish, accessible richer panels, documentation, self-contained platform packages and release automation | Windows ZIP/installer, Linux AppImage/tar.gz, macOS .app/DMG; runtime included; checksums/notices/source availability; signing policy and repeatable releases |
 

@@ -51,8 +51,8 @@ jobs:
           python tools/package_artifacts.py artifacts
       - uses: actions/upload-artifact@v4
         with:
-          name: thanos-phase2-${{ matrix.platform }}
-          path: artifacts/THANOS-0.2.0.zip
+          name: thanos-phase3-${{ matrix.platform }}
+          path: artifacts/THANOS-0.3.0.zip
       - uses: actions/upload-artifact@v4
         if: always()
         with:

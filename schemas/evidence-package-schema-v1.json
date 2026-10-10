@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Xx-LiDAF-xX/THANOS/main/schemas/evidence-package-schema-v1.json",
+  "title": "evidence-package",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "templateVersion": {
+      "const": "1"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "diagnose",
+        "findExistingFix",
+        "writePatch",
+        "portPatch",
+        "compareBuilds",
+        "investigateEmulatorIssue",
+        "optimizePerformance",
+        "deepReverseEngineering"
+      ]
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "$ref": "common-schema-v1.json#/$defs/PackageEntry"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "templateVersion",
+    "mode",
+    "entries",
+    "limitations"
+  ],
+  "additionalProperties": false
+}

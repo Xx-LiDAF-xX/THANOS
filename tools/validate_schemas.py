@@ -162,6 +162,49 @@ def main():
         assert reloaded == json.loads(saved_research.stdout)
         assert reloaded["evidence"]["game"]["gameFamily"] is None
         assert reloaded["knownIssues"][0]["provenance"]["status"] == "unverified"
+
+        research_file = directory / "research.json"
+        research_file.write_text(json.dumps(reloaded), encoding="utf-8")
+        modes = schemas["ai-prompt-schema-v1.json"]["properties"]["mode"]["enum"]
+        for mode in modes:
+            request = json.loads(run("generate-prompt", "--report", research_file, "--mode", mode).stdout)
+            validate("ai-prompt", request)
+            assert request["mode"] == mode and 0 <= request["readiness"] <= 1
+            assert "UNKNOWN" in request["text"] and "INCONCLUSIVE" in request["text"]
+            start = request["text"].index("{\n")
+            end = request["text"].rindex("\nEND OF EVIDENCE")
+            assert json.loads(request["text"][start:end]) == reloaded
+        assert json.loads(run("generate-prompt", research_file).stdout) == json.loads(run("generate-prompt", "--report", research_file).stdout)
+        analysis_file = directory / "analysis.json"
+        analysis_file.write_text(json.dumps(report), encoding="utf-8")
+        basic_request = json.loads(run("generate-prompt", analysis_file).stdout)
+        validate("ai-prompt", basic_request)
+        assert "Imported basic analysis snapshot" in basic_request["text"]
+        assert any(item.startswith("Binary evidence") for item in basic_request["missingEvidence"])
+        markdown = directory / "prompt.md"
+        bundle = directory / "evidence.zip"
+        request = json.loads(run("generate-prompt", "--report", research_file, "--output", markdown, "--bundle", bundle).stdout)
+        assert markdown.read_text(encoding="utf-8") == request["text"]
+        with zipfile.ZipFile(bundle) as archive:
+            assert sorted(archive.namelist()) == ["manifest.json", "prompt.json", "prompt.md", "research.json"]
+            manifest = json.loads(archive.read("manifest.json"))
+            validate("evidence-package", manifest)
+            for entry in manifest["entries"]:
+                content = archive.read(entry["file"])
+                assert len(content) == entry["bytes"] and hashlib.sha256(content).hexdigest() == entry["sha256"]
+            assert json.loads(archive.read("research.json")) == reloaded
+            assert json.loads(archive.read("prompt.json")) == request
+        fresh_request = json.loads(run("generate-prompt", executable, "--log", log, "--knowledge", knowledge_path).stdout)
+        assert fresh_request == request
+        run("generate-prompt", "--report", research_file, "--output", markdown, expected=3)
+        run("generate-prompt", executable, "--mode", "99", expected=2)
+        run("generate-prompt", executable, "--mode", "0", expected=2)
+        run("generate-prompt", "--report", research_file, "--log", log, expected=2)
+        run("generate-prompt", "--report", expected=2)
+        invalid_research = copy.deepcopy(reloaded)
+        invalid_research["schemaVersion"] = 99
+        research_file.write_text(json.dumps(invalid_research), encoding="utf-8")
+        run("generate-prompt", "--report", research_file, expected=3)
         assert executable.read_bytes() == create_elf()
         run("knowledge", "import", database, knowledge_path, expected=3)
         run("diagnose", executable, "--knowledge", knowledge_path, "--database", database, expected=2)

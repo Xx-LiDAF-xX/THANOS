@@ -3,6 +3,7 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Thanos.Core;
 using Thanos.Desktop.ViewModels;
+using Thanos.Infrastructure;
 
 namespace Thanos.Desktop;
 
@@ -55,6 +56,43 @@ public sealed partial class MainWindow : Window
             ViewModel.Status = "Evidence exported.";
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException)
+        {
+            ViewModel.Status = $"Export failed: {ex.Message}";
+        }
+    }
+    private async void CopyPrompt(object? sender, RoutedEventArgs e)
+    {
+        await new AvaloniaClipboardService(this).SetTextAsync(ViewModel.PromptText);
+    }
+    private async void ExportPrompt(object? sender, RoutedEventArgs e) => await ExportPromptAsync(false);
+    private async void ExportBundle(object? sender, RoutedEventArgs e) => await ExportPromptAsync(true);
+    private async Task ExportPromptAsync(bool bundle)
+    {
+        var prompt = ViewModel.CurrentPrompt;
+        var research = ViewModel.CurrentResearch;
+        if (prompt is null || research is null) { return; }
+        try
+        {
+            var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = bundle ? "Export evidence package to a new file" : "Export prompt to a new file",
+                SuggestedFileName = bundle ? "evidence.zip" : "prompt.md"
+            });
+            if (file is null) { return; }
+            if (!ReferenceEquals(prompt, ViewModel.CurrentPrompt) || !ReferenceEquals(research, ViewModel.CurrentResearch))
+            {
+                ViewModel.Status = "Evidence changed during selection; generate and export again.";
+                return;
+            }
+            var path = file.TryGetLocalPath() ?? throw new NotSupportedException("Select a local export destination.");
+            await Task.Run(async () =>
+            {
+                if (bundle) { await PromptExporter.WritePackageAsync(research, prompt, path); }
+                else { await PromptExporter.WriteTextAsync(prompt, path); }
+            });
+            ViewModel.Status = "Export completed. Review local paths and logs before sharing.";
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException or ArgumentException)
         {
             ViewModel.Status = $"Export failed: {ex.Message}";
         }

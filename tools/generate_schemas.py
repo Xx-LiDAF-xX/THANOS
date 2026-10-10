@@ -86,6 +86,10 @@ SCHEMAS.update({
 })
 
 
+DEFS["PackageEntry"] = obj(dict(file=STRING, sha256=HASH, bytes={"type": "integer", "minimum": 0}))
+SCHEMAS["evidence-package"] = dict(templateVersion={"const": "1"}, mode=SCHEMAS["ai-prompt"]["mode"], entries=array(common("PackageEntry")), limitations=array())
+
+
 def generate(check=False):
     documents = {name: obj(dict(schemaVersion={"const": 1}, **properties)) for name, properties in SCHEMAS.items()}
     documents["common"] = {"$defs": DEFS}

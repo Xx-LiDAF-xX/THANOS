@@ -36,4 +36,53 @@ public sealed class DesktopResearchTests
         Assert.Equal("", viewModel.Report);
         Assert.Contains("synthetic input error", viewModel.Status);
     }
+    private static async Task ExecuteAsync(System.Windows.Input.ICommand command)
+    {
+        var completed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        EventHandler handler = (_, _) => { if (command.CanExecute(null)) { completed.TrySetResult(); } };
+        command.CanExecuteChanged += handler;
+        command.Execute(null);
+        await completed.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        command.CanExecuteChanged -= handler;
+    }
+
+    [Fact]
+    public async Task PromptAndResearchExportsAreInvalidatedWhenInputsOrModeChange()
+    {
+        var service = new ControlledResearch();
+        var viewModel = new MainViewModel(service) { GamePath = "synthetic" };
+        Assert.False(viewModel.GeneratePromptCommand.CanExecute(null));
+        service.Completion.SetResult(new ResearchReport { Evidence = new AnalysisReport(1, new GameFingerprint(), null, null, []), Diagnosis = new DiagnosisEngine().Diagnose(null) });
+        await ExecuteAsync(viewModel.AnalyzeCommand);
+        await ExecuteAsync(viewModel.GeneratePromptCommand);
+        Assert.True(viewModel.HasPrompt);
+        Assert.Contains("UNKNOWN", viewModel.PromptText);
+        viewModel.Mode = PromptMode.PortPatch;
+        Assert.False(viewModel.HasPrompt);
+        Assert.True(viewModel.HasReport);
+        await ExecuteAsync(viewModel.GeneratePromptCommand);
+        Assert.Equal(PromptMode.PortPatch, viewModel.CurrentPrompt!.Mode);
+        viewModel.LogPath = "changed.log";
+        Assert.False(viewModel.HasPrompt);
+        Assert.False(viewModel.HasReport);
+        Assert.Null(viewModel.CurrentResearch);
+        Assert.False(viewModel.GeneratePromptCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public async Task ResearchFinishedForChangedInputsCannotBeExported()
+    {
+        var service = new ControlledResearch();
+        var viewModel = new MainViewModel(service) { GamePath = "original" };
+        var completed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        viewModel.AnalyzeCommand.CanExecuteChanged += (_, _) => { if (viewModel.AnalyzeCommand.CanExecute(null)) { completed.TrySetResult(); } };
+        viewModel.AnalyzeCommand.Execute(null);
+        viewModel.GamePath = "changed";
+        service.Completion.SetResult(new ResearchReport { Evidence = new AnalysisReport(1, new GameFingerprint(), null, null, []), Diagnosis = new DiagnosisEngine().Diagnose(null) });
+        await completed.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.False(viewModel.HasReport);
+        Assert.False(viewModel.HasPrompt);
+        Assert.Contains("Inputs changed", viewModel.Status);
+    }
+
 }
