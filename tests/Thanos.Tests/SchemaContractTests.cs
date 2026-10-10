@@ -18,7 +18,8 @@ public sealed class SchemaContractTests
         { typeof(BinaryInspection), "binary-inspection" }, { typeof(DiagnosisReport), "diagnosis-report" },
         { typeof(KnowledgeEntry), "knowledge-entry" }, { typeof(KnowledgeBundle), "knowledge-bundle" },
         { typeof(ResearchReport), "research" }, { typeof(AddressMappingResult), "address-mapping" },
-        { typeof(BinaryDifference), "binary-difference" }
+        { typeof(BinaryDifference), "binary-difference" },
+        { typeof(EvidencePackageManifest), "evidence-package" }
     };
 
     [Theory]

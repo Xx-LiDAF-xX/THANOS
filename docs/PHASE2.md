@@ -1,5 +1,7 @@
 # Phase 2: compatibility research
 
+Input collection was extended after the initial Phase 2 implementation: [complete logs and archive/package inputs](INPUTS.md), informed by the [local Kyty source review](KYTY_SOURCE_MAP.md).
+
 Version 0.2.0 adds error signatures/correlation, root-cause candidates, accessible ELF inspection, build relationships and a provenanced local knowledge base. It preserves the Phase 1 JSON formats and implements no AI prompts, game modifications, patch execution or emulator runner.
 
 ## Shared architecture
@@ -74,7 +76,7 @@ Address conversion is unique, bounded PT_LOAD mapping between file offset and vi
 | 256 MiB code hashing, 64 KiB per symbol-function hash, at most 8,192 code records | Bounded evidence; larger/omitted functions are not claimed inspected |
 | Binary difference: 256 MiB scan, 4,096 ranges, 64-byte previews, 16-byte contexts | Truncated flag and explicit prefix-only changed-byte totals |
 | Knowledge: 16 MiB JSON, 10,000 records, 512 imported signatures | Rejected before mutation or rolled back transactionally |
-| Signature matches: 10,000 retained | Later matches omitted with a limitation |
+| Logs and signature matches | No configured byte/line/line-length/match count limits; full evidence needs available memory |
 
 File SHA-256 covers the complete accessible input even when detailed inspection is limited. Strings use ASCII; UTF-16, compressed sections, sectionless dynamic-symbol recovery, SHN_XINDEX symbol-index decoding, proprietary ABI relocation semantics and instruction disassembly are explicit limitations. Unrecognized/protected containers are not decrypted and still support hash/log research. Binary differences are position-based; insertions can shift subsequent bytes, and changed bytes are not automatically the logical fix.
 

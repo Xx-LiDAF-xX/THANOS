@@ -11,10 +11,10 @@ public sealed class ResearchService(IAnalysisService analysis, IBinaryInspection
         if (binary is not null && binary.Fingerprint.Sha256 != evidence.Game.Sha256) { throw new InvalidDataException("Game file changed during evidence collection. Retry with a stable input."); }
         if (binary is not null)
         {
-            binary = binary with { Fingerprint = binary.Fingerprint with { Modules = evidence.Game.Modules } };
-            evidence = evidence with { Game = binary.Fingerprint, Limitations = ["Phase 2 research collects evidence and hypotheses; no AI prompts, patches or emulator execution."] };
+            binary = binary with { Fingerprint = binary.Fingerprint with { Modules = evidence.Game.Modules, MetadataSources = evidence.Game.MetadataSources, Limitations = evidence.Game.Limitations.Concat(binary.Fingerprint.Limitations).Distinct().ToArray() } };
+            evidence = evidence with { Game = binary.Fingerprint, Limitations = ["Research collects evidence and hypotheses. Prompts may be generated separately; patches and emulator execution are not implemented."] };
         }
-        else { evidence = evidence with { Limitations = ["No unambiguous binary available. Log-based Phase 2 diagnosis remains possible; prompts, patches and execution are not implemented."] }; }
+        else { evidence = evidence with { Limitations = ["No unambiguous binary available. Log-based diagnosis and evidence prompts remain possible; patches and execution are not implemented."] }; }
         var signatures = DiagnosisEngine.BuiltInSignatures.Concat(knowledge.ErrorSignatures).ToArray();
         var findings = diagnosis.Diagnose(evidence.Log, signatures);
         var familyIds = knowledge.Bindings.Where(b => b.ExecutableSha256 == evidence.Game.Sha256).Select(b => b.GameFamilyId).ToHashSet(StringComparer.Ordinal);

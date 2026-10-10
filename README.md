@@ -2,7 +2,7 @@
 
 Open-source, cross-platform evidence collection and compatibility research for games tested through Kyty. GPL-3.0-or-later.
 
-**Status: Phase 2 / 0.2.0 research.** The CLI and Avalonia desktop shell share evidence and research services. Phase 2 adds accessible ELF analysis, error correlation, root-cause candidates, binary relationships and a provenanced local knowledge base. AI prompts, patch import/application and emulator execution remain later phases.
+**Status: Phase 3 / 0.3.0 research and external-AI prompts.** The CLI and Avalonia desktop shell share evidence and research services. Phase 2 adds accessible ELF analysis, error correlation, root-cause candidates, binary relationships and a provenanced local knowledge base. Phase 3 adds eight prompt modes, weighted evidence readiness and prompt/evidence ZIP export. Patch import/application and emulator execution remain later phases.
 
 ## What works
 
@@ -10,9 +10,10 @@ Open-source, cross-platform evidence collection and compatibility research for g
 - Compute SHA-256 and file size; inspect little/big-endian ELF32/ELF64 headers and tag entry points as virtual addresses.
 - Inventory accessible game modules, without following directory symlinks.
 - Fingerprint a selected Kyty file without executing it. Version and capabilities remain UNKNOWN until supported detection is implemented.
-- Parse bounded UTF-8 logs, preserve raw text/hash and line order, identify initial error categories, capture log-reported metadata and hardware.
+- Parse complete UTF-8 logs without configured byte, line-count or line-length limits; preserve raw text/hash and line order, identify initial error categories, capture log-reported metadata and hardware.
+- Read game/log ZIPs and selected archive members; support RAR/7z/tar through libarchive and Kyty ZAR through the bundled Python reader. Load PKG as partial package evidence. See [input formats and helper requirements](docs/INPUTS.md).
 - Export JSON and store/retrieve evidence reports in a migrated SQLite database.
-- Use the desktop shell to select paths, analyze, export and copy evidence JSON.
+- Use the desktop shell to select paths, analyze, generate any prompt mode, inspect readiness/missing evidence, and copy/export JSON, prompt text or an evidence ZIP.
 - Inspect accessible ELF32/64 sections, segments, symbols, dynamic imports/exports, relocations, ASCII strings, executable-section hashes and symbol-bounded function hashes.
 - Map file, virtual and runtime addresses through unique PT_LOAD mappings; runtime mapping requires an explicit load bias. Zero-filled memory cannot be mapped to file bytes.
 - Match literal error signatures, identify the earliest observed error candidate and separate possible downstream effects from independent failures. Every root-cause candidate carries facts, evidence, hypotheses, confidence and a recommendation.
@@ -64,6 +65,8 @@ dotnet run --project src/Thanos.Cli -c Release --no-build -- diff-binaries ./ori
 dotnet run --project src/Thanos.Cli -c Release --no-build -- knowledge import ./knowledge.db ./examples/knowledge.json
 dotnet run --project src/Thanos.Cli -c Release --no-build -- knowledge export ./knowledge.db
 dotnet run --project src/Thanos.Cli -c Release --no-build -- database export-research ./knowledge.db RESEARCH_ID
+dotnet run --project src/Thanos.Cli -c Release --no-build -- generate-prompt ./Game.zip --log ./Logs.zip --mode diagnose --output ./request.md --bundle ./evidence.zip
+dotnet run --project src/Thanos.Cli -c Release --no-build -- generate-prompt --report ./research.json --mode portPatch
 ```
 
 Replace paths with local inputs. The sample log is explicitly synthetic, with no claim of real game compatibility. JSON goes to stdout; diagnostics and saved analysis IDs go to stderr. Redirect stdout to export a report. Exit codes: `0` collected evidence (possibly partial), `2` invalid usage/unimplemented command, `3` input/storage error, `130` cancellation.
@@ -72,7 +75,7 @@ Replace paths with local inputs. The sample log is explicitly synthetic, with no
 
 ## Packaging
 
-CI validates framework-dependent publications on each host and uploads a versioned ZIP with CLI, desktop, source references and license notices. End users need the .NET 10 runtime, not the SDK. Python is only for contributor checks.
+CI validates framework-dependent publications on each host and uploads a versioned ZIP with CLI, desktop, source references and license notices. End users need the .NET 10 runtime, not the SDK. Python is needed for ZAR inputs and contributor checks; libarchive bsdtar is needed for RAR/7z/tar. ZIP and ordinary files need neither helper.
 
 ```sh
 dotnet publish src/Thanos.Cli -c Release --no-restore --self-contained false -o artifacts/cli
@@ -85,8 +88,8 @@ Self-contained native ZIP/installers, AppImage/tar.gz, .app/DMG, signing and rel
 
 ## Documentation
 
-Start with [docs/PHASE2.md](docs/PHASE2.md) for research commands, architecture, knowledge semantics and binary limits. [ARCHITECTURE.md](ARCHITECTURE.md) describes the foundation; [docs/PHASE1.md](docs/PHASE1.md) retains the first-task deliverable index. [schemas/README.md](schemas/README.md) documents wire formats; [ROADMAP.md](ROADMAP.md) defines subsequent milestones. Contribution and security guidelines are in [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
+Start with [docs/PHASE3.md](docs/PHASE3.md) for prompts and evidence exports, then [docs/PHASE2.md](docs/PHASE2.md) for research commands, architecture, knowledge semantics and binary limits. [ARCHITECTURE.md](ARCHITECTURE.md) describes the foundation; [docs/PHASE1.md](docs/PHASE1.md) retains the first-task deliverable index. [schemas/README.md](schemas/README.md) documents wire formats; [ROADMAP.md](ROADMAP.md) defines subsequent milestones. Contribution and security guidelines are in [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
 
-Inputs are read-only. Archives are hashed as ordinary files and are not extracted. Unrecognized containers do not imply successful code inspection or decryption. Application JSON Lines logs use the platform's local application-data directory under `THANOS/logs`; full input paths and game bytes are not written to these logs. Exported analysis reports do contain local paths and raw user-supplied logs.
+Inputs are read-only. Selected archive members are decoded into temporary spools; their hashes refer to the complete decompressed member. PKG is partial package evidence. Unrecognized containers do not imply successful code inspection or decryption. Application JSON Lines logs use the platform's local application-data directory under `THANOS/logs`; full input paths and game bytes are not written to these logs. Exported analysis reports do contain local paths and raw user-supplied logs.
 
 The repository is independent of Kyty and is not an official emulator project. Analyze-only mode does not require an installed emulator. THANOS running on an OS does not establish that a particular Kyty build can run there.

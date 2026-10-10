@@ -9,11 +9,15 @@ namespace Thanos.Cli;
 internal static class Program
 {
     private const string Help = """
-        THANOS 0.2.0 — Kyty compatibility research (Phase 2)
+        THANOS 0.3.0 — Kyty compatibility research (Phase 3)
 
-        kytyfixer fingerprint <game-directory-or-file>
+        kytyfixer fingerprint <game-directory-file-or-archive>
         kytyfixer detect-kyty <executable>
-        kytyfixer parse-log <log>
+        kytyfixer parse-log <log-or-archive>
+        kytyfixer list-input <archive>
+        kytyfixer generate-prompt <game> [--kyty <file>] [--log <file>] [--related <file>] [--knowledge <json> | --database <db>] [--mode <mode>] [--output <new.md>] [--bundle <new.zip>]
+        kytyfixer generate-prompt <analysis-or-research.json> [--mode <mode>] [--output <new.md>] [--bundle <new.zip>]
+        kytyfixer generate-prompt --report <analysis-or-research.json> [--mode <mode>] [--output <new.md>] [--bundle <new.zip>]
         kytyfixer analyze <game> [--kyty <file>] [--log <file>] [--database <db>]
         kytyfixer diagnose <game> [--kyty <file>] [--log <file>] [--related <file>] [--knowledge <json> | --database <db>]
         kytyfixer binary-info <file>
@@ -31,7 +35,15 @@ internal static class Program
         analyze --database saves a uniquely identified report; its id is printed to stderr.
         Exit codes: 0 success (may be PARTIAL), 2 usage, 3 input/storage error, 130 canceled.
         analyze preserves the Phase 1 JSON contract; diagnose emits a Phase 2 research report.
-        generate-prompt, validate-patch, apply-patch, test, compare, benchmark and report
+        ZIP is built in. RAR/7z/tar require libarchive bsdtar. ZAR requires Python (3.14,
+        or zstandard installed). PKG is package evidence only; no executable decryption.
+        Select an archive member explicitly: "game.zip!/Game/eboot.bin".
+        Log byte count, line count and line length have no configured limits.
+        Prompt modes: diagnose, findExistingFix, writePatch, portPatch, compareBuilds,
+        investigateEmulatorIssue, optimizePerformance, deepReverseEngineering.
+        Prompt commands emit AIPrompt JSON; --output exports text and --bundle packages
+        complete research/prompt evidence with SHA-256 manifest. Existing exports are not replaced.
+        validate-patch, apply-patch, test, compare, benchmark and report
         are roadmap commands. There is no emulator execution or game modification.
         """;
 
@@ -55,6 +67,9 @@ internal static class Program
             {
                 case ["fingerprint", var input]:
                     result = await fingerprints.FingerprintAsync(input, token);
+                    break;
+                case ["list-input", var archivePath]:
+                    result = new { sourcePath = Path.GetFullPath(archivePath), members = await ContainerInputs.ListAsync(archivePath, token) };
                     break;
                 case ["detect-kyty", var executable]:
                     result = await new KytyCapabilityDetector(fingerprints).DetectAsync(executable, token);
@@ -107,24 +122,32 @@ internal static class Program
                     result = await exportStore.ExportKnowledgeAsync(token);
                     break;
                 default:
-                    if (args.Length < 2 || args[0] is not ("analyze" or "diagnose"))
+                    if (args.Length < 2 || args[0] is not ("analyze" or "diagnose" or "generate-prompt"))
                     {
                         Console.Error.WriteLine(Help);
                         return 2;
                     }
+                    var explicitReport = args[0] == "generate-prompt" && args[1] == "--report";
+                    var savedPrompt = explicitReport || args[0] == "generate-prompt" && args[1].EndsWith(".json", StringComparison.OrdinalIgnoreCase);
+                    if (explicitReport && args.Length < 3) { Console.Error.WriteLine("--report needs a research JSON file."); return 2; }
                     var options = new Dictionary<string, string>();
-                    for (var i = 2; i < args.Length; i += 2)
+                    for (var i = explicitReport ? 3 : 2; i < args.Length; i += 2)
                     {
-                        if (i + 1 >= args.Length || args[i] is not ("--kyty" or "--log" or "--database" or "--knowledge" or "--related") || (args[0] == "analyze" && args[i] is "--knowledge" or "--related") || !options.TryAdd(args[i], args[i + 1]))
+                        var allowed = args[0] == "generate-prompt"
+                            ? savedPrompt ? new[] { "--mode", "--output", "--bundle" } : ["--kyty", "--log", "--database", "--knowledge", "--related", "--mode", "--output", "--bundle"]
+                            : args[0] == "analyze" ? new[] { "--kyty", "--log", "--database" } : ["--kyty", "--log", "--database", "--knowledge", "--related"];
+                        if (i + 1 >= args.Length || !allowed.Contains(args[i], StringComparer.Ordinal) || !options.TryAdd(args[i], args[i + 1]))
                         {
-                            Console.Error.WriteLine("Invalid, duplicate or incomplete analyze option.");
+                            Console.Error.WriteLine("Invalid, duplicate or incomplete command option.");
                             return 2;
                         }
                     }
                     options.TryGetValue("--kyty", out var kyty);
                     options.TryGetValue("--log", out var logPath);
-                    if (args[0] == "diagnose")
+                    if (args[0] is "diagnose" or "generate-prompt")
                     {
+                        var mode = PromptMode.Diagnose;
+                        if (options.TryGetValue("--mode", out var requestedMode) && (!Enum.TryParse(requestedMode, true, out mode) || !Enum.IsDefined(mode) || int.TryParse(requestedMode, out _))) { Console.Error.WriteLine("Unrecognized prompt mode."); return 2; }
                         if (options.ContainsKey("--knowledge") && options.ContainsKey("--database")) { Console.Error.WriteLine("Use --knowledge or --database, not both."); return 2; }
                         SqliteKnowledgeStore? researchStore = null;
                         KnowledgeBundle? knowledge = null;
@@ -134,13 +157,20 @@ internal static class Program
                             researchStore = new SqliteKnowledgeStore(dbPath); await researchStore.InitializeAsync(token); knowledge = await researchStore.ExportKnowledgeAsync(token);
                         }
                         options.TryGetValue("--related", out var relatedPath);
-                        var research = await ServiceFactory.CreateResearchService().ResearchAsync(args[1], kyty, logPath, knowledge, relatedPath, token);
+                        var research = savedPrompt ? await ResearchJson.ReadAsync(args[explicitReport ? 2 : 1], token) : await ServiceFactory.CreateResearchService().ResearchAsync(args[1], kyty, logPath, knowledge, relatedPath, token);
                         if (researchStore is not null)
                         {
                             var researchId = Guid.NewGuid().ToString("N"); await researchStore.SaveResearchAsync(researchId, research, token);
                             Console.Error.WriteLine($"Saved research: {researchId}");
                         }
-                        result = research;
+                        if (args[0] == "generate-prompt")
+                        {
+                            var prompt = new PromptGenerator().Generate(research, mode);
+                            if (options.TryGetValue("--output", out var promptOutput)) { await PromptExporter.WriteTextAsync(prompt, promptOutput, token); }
+                            if (options.TryGetValue("--bundle", out var packageOutput)) { await PromptExporter.WritePackageAsync(research, prompt, packageOutput, token); }
+                            result = prompt;
+                        }
+                        else { result = research; }
                         break;
                     }
                     var report = await ServiceFactory.CreateAnalysisService().AnalyzeAsync(args[1], kyty, logPath, token);

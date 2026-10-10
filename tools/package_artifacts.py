@@ -17,6 +17,9 @@ for project, assembly in [("cli", "kytyfixer"), ("desktop", "Thanos.Desktop")]:
         shutil.copy2(ROOT / document, destination / project / document)
     shutil.copytree(ROOT / "licenses", destination / project / "licenses", dirs_exist_ok=True)
     revision = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True, check=False).stdout.strip()
+    state = subprocess.run(["git", "status", "--porcelain"], cwd=ROOT, capture_output=True, text=True, check=False)
+    if state.returncode != 0 or state.stdout.strip():
+        revision = f"uncommitted development snapshot (base {revision or 'unknown'})"
     source = "https://github.com/Xx-LiDAF-xX/THANOS"
     (destination / project / "SOURCE.txt").write_text(f"THANOS source (GPL-3.0-or-later): {source}\nRevision: {revision or 'uncommitted development snapshot'}\n")
 archive = shutil.make_archive(str(destination / f"THANOS-{version}"), "zip", destination, "cli")

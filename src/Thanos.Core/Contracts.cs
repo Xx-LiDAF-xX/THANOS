@@ -5,6 +5,7 @@ public interface IFileSystem
     bool FileExists(string path);
     bool DirectoryExists(string path);
     Stream OpenRead(string path);
+    Task<Stream> OpenReadAsync(string path, CancellationToken cancellationToken = default) => Task.FromResult(OpenRead(path));
     IEnumerable<string> EnumerateFiles(string directory);
     bool IsSymbolicLink(string path);
 }
@@ -47,6 +48,10 @@ public interface IBinaryAnalyzer { Task<GameFingerprint> AnalyzeAsync(string pat
 public interface ICompatibilitySource { Task<GameFamily[]> FindFamiliesAsync(GameFingerprint game, CancellationToken cancellationToken = default); }
 public interface IPatchProvider { Task<PatchProposal[]> FindPatchesAsync(GameFingerprint game, CancellationToken cancellationToken = default); }
 public interface IAIPromptTemplate { PromptMode Mode { get; } string Render(AnalysisReport report); }
-public interface IAIPromptGenerator { AIPrompt Generate(AnalysisReport report, PromptMode mode); }
+public interface IAIPromptGenerator
+{
+    AIPrompt Generate(AnalysisReport report, PromptMode mode);
+    AIPrompt Generate(ResearchReport report, PromptMode mode);
+}
 public interface IKytyAdapter { bool Supports(KytyFingerprint kyty); ProcessRequest CreateRequest(KytyFingerprint kyty, string workingCopy); }
 public interface IKytyRunner { Task<ProcessResult> RunAsync(KytyFingerprint kyty, string workingCopy, CancellationToken cancellationToken = default); }

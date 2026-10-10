@@ -135,7 +135,7 @@ public sealed class EvidenceTests : IDisposable
         Assert.Equal("MIMG", shader.Opcode);
         Assert.Equal(40, shader.SourceLine);
         Assert.Equal(4, shader.LineNumber);
-        Assert.Equal(AddressSpace.RuntimeAddress, shader.ProgramCounter!.AddressSpace);
+        Assert.Equal(AddressSpace.RelativeAddress, shader.ProgramCounter!.AddressSpace);
         Assert.Equal("custom", parsed.KytyVersion);
         Assert.Equal("example", parsed.Hardware["gpu"]);
         Assert.Equal(ErrorCategory.Unknown, parsed.Events[^1].Category);
@@ -153,18 +153,22 @@ public sealed class EvidenceTests : IDisposable
     }
 
     [Fact]
-    public async Task OversizedLogRejectedBeforeParsing()
+    public async Task LogBeyondFormerByteLimitIsFullyPreserved()
     {
-        var path = Path.Combine(directory, "large.log");
-        await using (var file = File.Create(path)) { file.SetLength(KytyLogParser.MaximumBytes + 1L); }
-        await Assert.ThrowsAsync<InvalidDataException>(() => logs.ParseAsync(path));
+        var raw = new string('x', 16 * 1024 * 1024 + 1) + "\nVulkan error VK_ERROR_DEVICE_LOST\n";
+        var parsed = await logs.ParseAsync(await FileAsync("large.log", Encoding.UTF8.GetBytes(raw)));
+        Assert.Equal(raw, parsed.RawText);
+        Assert.Equal(ErrorCategory.Vulkan, parsed.Events[^1].Category);
+        Assert.Equal(Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(raw))), parsed.Sha256);
     }
 
     [Fact]
-    public async Task OversizedLineRejected()
+    public async Task LongLineRetainsTrailingDiagnostics()
     {
-        var path = await FileAsync("long.log", Encoding.UTF8.GetBytes(new string('x', KytyLogParser.MaximumLineLength + 1)));
-        await Assert.ThrowsAsync<InvalidDataException>(() => logs.ParseAsync(path));
+        var raw = new string('x', 65537) + " Shader error family=MIMG PC=0x123";
+        var parsed = await logs.ParseAsync(await FileAsync("long.log", Encoding.UTF8.GetBytes(raw)));
+        Assert.Equal(raw, Assert.Single(parsed.Events).RawLine);
+        Assert.Equal("0x123", parsed.Events[0].ProgramCounter!.Value);
     }
 
     [Fact]
@@ -175,10 +179,12 @@ public sealed class EvidenceTests : IDisposable
     }
 
     [Fact]
-    public async Task ManyShortLinesCannotExpandIntoUnboundedEventObjects()
+    public async Task LinesBeyondFormerLineLimitAreAnalyzed()
     {
-        var path = await FileAsync("many.log", Encoding.UTF8.GetBytes(new string('\n', KytyLogParser.MaximumLines + 1)));
-        await Assert.ThrowsAsync<InvalidDataException>(() => logs.ParseAsync(path));
+        var path = await FileAsync("many.log", Encoding.UTF8.GetBytes(new string('\n', 100001) + "Shader error unsupported"));
+        var parsed = await logs.ParseAsync(path);
+        Assert.Equal(100002, parsed.Events.Length);
+        Assert.Equal(100002, new DiagnosisEngine().Diagnose(parsed).PrimaryFailure!.LineNumber);
     }
 
     [Fact]
