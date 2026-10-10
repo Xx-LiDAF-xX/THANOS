@@ -11,7 +11,7 @@ public sealed class ResearchService(IAnalysisService analysis, IBinaryInspection
         if (binary is not null && binary.Fingerprint.Sha256 != evidence.Game.Sha256) { throw new InvalidDataException("Game file changed during evidence collection. Retry with a stable input."); }
         if (binary is not null)
         {
-            binary = binary with { Fingerprint = binary.Fingerprint with { Modules = evidence.Game.Modules } };
+            binary = binary with { Fingerprint = binary.Fingerprint with { Modules = evidence.Game.Modules, MetadataSources = evidence.Game.MetadataSources, Limitations = evidence.Game.Limitations.Concat(binary.Fingerprint.Limitations).Distinct().ToArray() } };
             evidence = evidence with { Game = binary.Fingerprint, Limitations = ["Phase 2 research collects evidence and hypotheses; no AI prompts, patches or emulator execution."] };
         }
         else { evidence = evidence with { Limitations = ["No unambiguous binary available. Log-based Phase 2 diagnosis remains possible; prompts, patches and execution are not implemented."] }; }

@@ -5,9 +5,10 @@ namespace Thanos.Infrastructure;
 
 public sealed class LocalFileSystem : IFileSystem
 {
-    public bool FileExists(string path) => File.Exists(path);
+    public bool FileExists(string path) => File.Exists(ContainerInputs.Split(path).Container);
     public bool DirectoryExists(string path) => Directory.Exists(path);
-    public Stream OpenRead(string path) => new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 65536, FileOptions.Asynchronous | FileOptions.SequentialScan);
+    public Stream OpenRead(string path) => OpenReadAsync(path).GetAwaiter().GetResult();
+    public Task<Stream> OpenReadAsync(string path, CancellationToken cancellationToken = default) => ContainerInputs.OpenReadAsync(path, cancellationToken);
     public IEnumerable<string> EnumerateFiles(string directory) => Directory.EnumerateFiles(directory, "*", new EnumerationOptions
     {
         RecurseSubdirectories = true,
@@ -15,12 +16,16 @@ public sealed class LocalFileSystem : IFileSystem
         IgnoreInaccessible = false,
         MaxRecursionDepth = 32
     });
-    public bool IsSymbolicLink(string path) => (File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0;
+    public bool IsSymbolicLink(string path) => (File.GetAttributes(ContainerInputs.Split(path).Container) & FileAttributes.ReparsePoint) != 0;
 }
 
 public sealed class LocalPathService : IPathService
 {
-    public string GetFullPath(string path) => Path.GetFullPath(path);
+    public string GetFullPath(string path)
+    {
+        var (container, member) = ContainerInputs.Split(path);
+        return Path.GetFullPath(container) + (member is null ? "" : "!/" + member);
+    }
     public string Combine(string directory, string name) => Path.Combine(directory, name);
     public string GetFileName(string path) => Path.GetFileName(path);
 }

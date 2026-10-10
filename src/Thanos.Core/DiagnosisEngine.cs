@@ -20,17 +20,14 @@ public sealed class DiagnosisEngine : IDiagnosisEngine
         KnowledgeValidation.ValidateSignatures(signatures);
         var failures = log?.Events.Where(e => e.Severity >= Severity.Error || IsTermination(e)).ToArray() ?? [];
         var matches = new List<SignatureMatch>();
-        var matchLimitReached = false;
         foreach (var failure in failures)
         {
             foreach (var signature in signatures)
             {
                 if (signature.Category != failure.Category || !signature.ContainsAll.All(s => failure.Message.Contains(s, StringComparison.OrdinalIgnoreCase))) { continue; }
-                if (matches.Count == 10000) { matchLimitReached = true; break; }
                 // Even trusted signature provenance does not establish this run's root cause.
                 matches.Add(new SignatureMatch(signature.Id, failure.LineNumber, signature.Hypothesis, Math.Min(signature.Confidence, 0.7), signature.Provenance));
             }
-            if (matchLimitReached) { break; }
         }
         var primary = failures.FirstOrDefault(e => !IsTermination(e)) ?? failures.FirstOrDefault();
         var secondary = new List<ErrorEvent>();
@@ -79,7 +76,7 @@ public sealed class DiagnosisEngine : IDiagnosisEngine
             Matches = matches.ToArray(),
             Correlations = links.ToArray(),
             Candidates = candidates.ToArray(),
-            Limitations = ["Primary failure is the earliest observed non-termination error candidate, not proven causality. Cascades are limited to 25 lines. Independent errors remain visible.", "Lexical signatures produce hypotheses, not verified fixes or compatibility results. Runtime addresses require an explicit load bias to map.", .. (matchLimitReached ? new[] { "Signature match inventory limited to 10000 entries; later matches omitted." } : Array.Empty<string>())]
+            Limitations = ["Primary failure is the earliest observed non-termination error candidate, not proven causality. Cascades are limited to 25 lines. Independent errors remain visible.", "Lexical signatures produce hypotheses, not verified fixes or compatibility results. Runtime addresses require an explicit load bias to map."]
         };
     }
     private static bool IsTermination(ErrorEvent e) => e.EventType == "Termination" || e.Message.Contains("process terminated", StringComparison.OrdinalIgnoreCase);

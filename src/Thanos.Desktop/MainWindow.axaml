@@ -8,7 +8,7 @@
     </StackPanel>
     <Grid Grid.Row="1" ColumnDefinitions="140,*,Auto" ColumnSpacing="10">
       <TextBlock Text="Game folder / file" VerticalAlignment="Center" />
-      <TextBox Grid.Column="1" Text="{Binding GamePath}" Watermark="Path to game folder, eboot.bin or ELF" />
+      <TextBox Grid.Column="1" Text="{Binding GamePath}" Watermark="Game folder, executable, ZIP, RAR, 7z, ZAR or PKG" />
       <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="5"><Button Content="Folder" Click="ChooseGameFolder" /><Button Content="File" Click="ChooseGameFile" /></StackPanel>
     </Grid>
     <Grid Grid.Row="2" ColumnDefinitions="140,*,Auto" ColumnSpacing="10">
@@ -18,7 +18,7 @@
     </Grid>
     <Grid Grid.Row="3" ColumnDefinitions="140,*,Auto" ColumnSpacing="10">
       <TextBlock Text="Log (optional)" VerticalAlignment="Center" />
-      <TextBox Grid.Column="1" Text="{Binding LogPath}" Watermark="UTF-8 Kyty log" />
+      <TextBox Grid.Column="1" Text="{Binding LogPath}" Watermark="UTF-8 log or archive; archive.zip!/member for selection" />
       <Button Grid.Column="2" Content="Browse" Click="ChooseLog" />
     </Grid>
     <Grid Grid.Row="4" ColumnDefinitions="140,*,Auto" ColumnSpacing="10">
@@ -28,7 +28,7 @@
     </Grid>
     <Grid Grid.Row="5" ColumnDefinitions="140,*,Auto" ColumnSpacing="10">
       <TextBlock Text="Related build (optional)" VerticalAlignment="Center" />
-      <TextBox Grid.Column="1" Text="{Binding RelatedPath}" Watermark="Related ELF file for code comparison" />
+      <TextBox Grid.Column="1" Text="{Binding RelatedPath}" Watermark="Related executable or game archive" />
       <Button Grid.Column="2" Content="Browse" Click="ChooseRelated" />
     </Grid>
     <StackPanel Grid.Row="6" Orientation="Horizontal" Spacing="10">

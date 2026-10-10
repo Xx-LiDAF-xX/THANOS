@@ -5,6 +5,7 @@ public interface IFileSystem
     bool FileExists(string path);
     bool DirectoryExists(string path);
     Stream OpenRead(string path);
+    Task<Stream> OpenReadAsync(string path, CancellationToken cancellationToken = default) => Task.FromResult(OpenRead(path));
     IEnumerable<string> EnumerateFiles(string directory);
     bool IsSymbolicLink(string path);
 }

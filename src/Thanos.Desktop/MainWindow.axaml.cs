@@ -23,7 +23,7 @@ public sealed partial class MainWindow : Window
     }
     private async void ChooseGameFile(object? sender, RoutedEventArgs e)
     {
-        if (await PickFile("Select game file") is { } path) { ViewModel.GamePath = path; }
+        if (await PickFile("Select executable, game archive or package") is { } path) { ViewModel.GamePath = path; }
     }
     private async void ChooseKyty(object? sender, RoutedEventArgs e)
     {
@@ -31,7 +31,7 @@ public sealed partial class MainWindow : Window
     }
     private async void ChooseLog(object? sender, RoutedEventArgs e)
     {
-        if (await PickFile("Select Kyty log") is { } path) { ViewModel.LogPath = path; }
+        if (await PickFile("Select Kyty log or log archive") is { } path) { ViewModel.LogPath = path; }
     }
     private async void ChooseKnowledge(object? sender, RoutedEventArgs e)
     {

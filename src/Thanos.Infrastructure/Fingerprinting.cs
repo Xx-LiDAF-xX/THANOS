@@ -22,11 +22,25 @@ public sealed class GameFingerprinter(IFileSystem files, IPathService paths) : I
         var limitations = new List<string>
         {
             "Game identity, family, version and engine are UNKNOWN without verified metadata.",
-            "Only accessible file hashes and ELF headers are inspected in Phase 1; no decryption or section/function analysis."
+            "Fingerprinting collects accessible file hashes and ELF headers. Use binary-info/diagnose for structural analysis; no decryption is performed."
         };
         string? executable = fullPath;
         string[] modules = [];
-        if (files.DirectoryExists(fullPath))
+        if (ContainerInputs.Split(fullPath).Member is null && ContainerInputs.IsArchive(fullPath))
+        {
+            var inventory = await ContainerInputs.ListAsync(fullPath, cancellationToken);
+            var candidates = inventory.Where(p => Path.GetFileName(p).Equals("eboot.bin", StringComparison.OrdinalIgnoreCase)).ToArray();
+            if (candidates.Length == 0) { candidates = inventory.Where(p => p.EndsWith(".elf", StringComparison.OrdinalIgnoreCase)).ToArray(); }
+            modules = inventory.Where(p => p.EndsWith(".sprx", StringComparison.OrdinalIgnoreCase) || p.EndsWith(".prx", StringComparison.OrdinalIgnoreCase)).Order(StringComparer.Ordinal).ToArray();
+            executable = candidates.Length == 1 ? fullPath + "!/" + candidates[0] : null;
+            limitations.Add("Archive member paths identify decompressed evidence. Members are spooled read-only; no archive paths are extracted into the game directory.");
+            if (executable is null)
+            {
+                limitations.Add("No unique executable in archive. Select an exact member with archive.zip!/path/to/eboot.bin.");
+                return new GameFingerprint { Modules = modules, Limitations = limitations.ToArray(), MetadataSources = [new Evidence(fullPath, "Archive member inventory; no executable selected")] };
+            }
+        }
+        else if (files.DirectoryExists(fullPath))
         {
             var inventory = new List<string>();
             foreach (var file in files.EnumerateFiles(fullPath))
@@ -54,12 +68,22 @@ public sealed class GameFingerprinter(IFileSystem files, IPathService paths) : I
                 return new GameFingerprint { Modules = modules, Limitations = limitations.ToArray(), MetadataSources = [new Evidence(fullPath, "Directory inventory only")] };
             }
         }
-        await using var stream = files.OpenRead(executable);
+        await using var stream = await files.OpenReadAsync(executable, cancellationToken);
         var length = stream.Length;
         var hash = Convert.ToHexStringLower(await SHA256.HashDataAsync(stream, cancellationToken));
         stream.Position = 0;
         var header = new byte[64];
         var count = await stream.ReadAtLeastAsync(header, header.Length, false, cancellationToken);
+        if (fullPath.EndsWith(".pkg", StringComparison.OrdinalIgnoreCase))
+        {
+            var recognized = count >= 4 && header.AsSpan(0, 4).SequenceEqual(new byte[] { 0x7f, 0x43, 0x4e, 0x54 });
+            return new GameFingerprint
+            {
+                FileSize = length,
+                MetadataSources = [new Evidence(fullPath, $"Complete package SHA-256: {hash}"), new Evidence(fullPath, recognized ? "CNT package header magic observed; package contents are not authenticated." : "Unknown PKG header; package variant is unsupported.")],
+                Limitations = ["PKG loaded as package evidence, not as an executable. Package filesystem/decryption is not implemented; executable hash, identity and addresses are UNKNOWN. Select an accessible extracted eboot.bin for code analysis."]
+            };
+        }
         var info = ElfHeader.Read(header.AsSpan(0, count), length);
         if (info.Limitation is not null)
         {
@@ -74,7 +98,7 @@ public sealed class GameFingerprinter(IFileSystem files, IPathService paths) : I
             EntryPoint = info.EntryPoint,
             ElfType = info.Type,
             Modules = modules,
-            MetadataSources = [new Evidence(executable, "SHA-256 of complete accessible file"), new Evidence(executable, "ELF identification/header inspection")],
+            MetadataSources = [new Evidence(executable, "SHA-256 of complete accessible file/member"), new Evidence(executable, "ELF identification/header inspection"), .. (executable == fullPath ? Array.Empty<Evidence>() : new[] { new Evidence(fullPath, "Container from which the executable member was selected") })],
             Limitations = limitations.ToArray()
         };
     }
@@ -121,11 +145,12 @@ public sealed class KytyCapabilityDetector(IGameFingerprinter fingerprints) : IK
 {
     public async Task<KytyFingerprint> DetectAsync(string executable, CancellationToken cancellationToken = default)
     {
-        if (!File.Exists(executable))
+        if (!File.Exists(executable) || ContainerInputs.IsArchive(executable))
         {
             throw new FileNotFoundException("Kyty executable must be a file.", executable);
         }
         var file = await fingerprints.FingerprintAsync(executable, cancellationToken);
+        if (file.ExecutablePath is null || file.Sha256 is null) { throw new InvalidDataException("Kyty fingerprinting requires an executable file rather than a package."); }
         return new KytyFingerprint
         {
             ExecutablePath = file.ExecutablePath!,

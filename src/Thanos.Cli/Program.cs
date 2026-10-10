@@ -11,9 +11,10 @@ internal static class Program
     private const string Help = """
         THANOS 0.2.0 — Kyty compatibility research (Phase 2)
 
-        kytyfixer fingerprint <game-directory-or-file>
+        kytyfixer fingerprint <game-directory-file-or-archive>
         kytyfixer detect-kyty <executable>
-        kytyfixer parse-log <log>
+        kytyfixer parse-log <log-or-archive>
+        kytyfixer list-input <archive>
         kytyfixer analyze <game> [--kyty <file>] [--log <file>] [--database <db>]
         kytyfixer diagnose <game> [--kyty <file>] [--log <file>] [--related <file>] [--knowledge <json> | --database <db>]
         kytyfixer binary-info <file>
@@ -31,6 +32,10 @@ internal static class Program
         analyze --database saves a uniquely identified report; its id is printed to stderr.
         Exit codes: 0 success (may be PARTIAL), 2 usage, 3 input/storage error, 130 canceled.
         analyze preserves the Phase 1 JSON contract; diagnose emits a Phase 2 research report.
+        ZIP is built in. RAR/7z/tar require libarchive bsdtar. ZAR requires Python (3.14,
+        or zstandard installed). PKG is package evidence only; no executable decryption.
+        Select an archive member explicitly: "game.zip!/Game/eboot.bin".
+        Log byte count, line count and line length have no configured limits.
         generate-prompt, validate-patch, apply-patch, test, compare, benchmark and report
         are roadmap commands. There is no emulator execution or game modification.
         """;
@@ -55,6 +60,9 @@ internal static class Program
             {
                 case ["fingerprint", var input]:
                     result = await fingerprints.FingerprintAsync(input, token);
+                    break;
+                case ["list-input", var archivePath]:
+                    result = new { sourcePath = Path.GetFullPath(archivePath), members = await ContainerInputs.ListAsync(archivePath, token) };
                     break;
                 case ["detect-kyty", var executable]:
                     result = await new KytyCapabilityDetector(fingerprints).DetectAsync(executable, token);

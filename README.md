@@ -10,7 +10,8 @@ Open-source, cross-platform evidence collection and compatibility research for g
 - Compute SHA-256 and file size; inspect little/big-endian ELF32/ELF64 headers and tag entry points as virtual addresses.
 - Inventory accessible game modules, without following directory symlinks.
 - Fingerprint a selected Kyty file without executing it. Version and capabilities remain UNKNOWN until supported detection is implemented.
-- Parse bounded UTF-8 logs, preserve raw text/hash and line order, identify initial error categories, capture log-reported metadata and hardware.
+- Parse complete UTF-8 logs without configured byte, line-count or line-length limits; preserve raw text/hash and line order, identify initial error categories, capture log-reported metadata and hardware.
+- Read game/log ZIPs and selected archive members; support RAR/7z/tar through libarchive and Kyty ZAR through the bundled Python reader. Load PKG as partial package evidence. See [input formats and helper requirements](docs/INPUTS.md).
 - Export JSON and store/retrieve evidence reports in a migrated SQLite database.
 - Use the desktop shell to select paths, analyze, export and copy evidence JSON.
 - Inspect accessible ELF32/64 sections, segments, symbols, dynamic imports/exports, relocations, ASCII strings, executable-section hashes and symbol-bounded function hashes.

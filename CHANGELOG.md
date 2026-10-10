@@ -2,6 +2,11 @@
 
 ## 0.2.0 — Unreleased
 
+- Reviewed the local KytyPS5 boot/loader/filesystem/shader/logging paths and documented their implications for research.
+- Removed configured log byte, line-count, line-length and signature-match caps; added incremental UTF-8 decoding/hashing and linear regex matching.
+- Added ZIP game/log members, RAR/7z/tar via libarchive, Kyty ZAR via the bundled Python reader, and partial PKG package evidence; archives preserve selected-member paths and do not modify inputs.
+- Corrected shader PC domains and fatal-banner handling using the reviewed Kyty log formats.
+
 - Added bounded ELF32/64 structural inspection in both byte orders, section/program tables, extended table numbering, symbols, dynamic imports/exports, relocations, strings and code hashes.
 - Added guarded address mapping and bounded original/candidate binary differences with context.
 - Added literal error signatures, temporal/category correlation, independent failures and evidence-backed root-cause hypotheses with UNKNOWN fallbacks.

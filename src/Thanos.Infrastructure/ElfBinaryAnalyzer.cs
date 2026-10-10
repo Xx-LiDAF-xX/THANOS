@@ -21,7 +21,11 @@ public sealed class ElfBinaryAnalyzer(IFileSystem files, IPathService paths, IGa
     {
         if (!files.FileExists(path)) { throw new FileNotFoundException("Binary inspection requires a file.", path); }
         var fingerprint = await fingerprints.FingerprintAsync(path, cancellationToken);
-        await using var stream = files.OpenRead(paths.GetFullPath(path));
+        if (fingerprint.ExecutablePath is null)
+        {
+            return new BinaryInspection { Fingerprint = fingerprint, Status = BinaryInspectionStatus.Unsupported, Limitations = fingerprint.Limitations };
+        }
+        await using var stream = await files.OpenReadAsync(paths.GetFullPath(fingerprint.ExecutablePath), cancellationToken);
         var reader = new Reader(stream, cancellationToken);
         var magic = reader.Read(0, (int)Math.Min(stream.Length, 64));
         if (magic.Length < 4 || !magic.AsSpan(0, 4).SequenceEqual(new byte[] { 0x7f, 0x45, 0x4c, 0x46 }))

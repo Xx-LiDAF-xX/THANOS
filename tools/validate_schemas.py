@@ -6,6 +6,7 @@ import json
 import struct
 import subprocess
 import tempfile
+import zipfile
 from pathlib import Path
 
 from jsonschema import Draft202012Validator
@@ -121,6 +122,27 @@ def main():
         assert len(research["diagnosis"]["secondaryFailures"]) == 2
         assert research["diagnosis"]["candidates"][0]["layer"] == "KYTY EMULATOR / SHADER"
         assert research["relatedBuilds"][0]["strength"] == "unknown"
+        zipped_game = directory / "Game.zip"
+        zipped_log = directory / "Logs.zip"
+        with zipfile.ZipFile(zipped_game, "w", zipfile.ZIP_DEFLATED) as archive:
+            archive.writestr("Game/eboot.bin", executable.read_bytes())
+        with zipfile.ZipFile(zipped_log, "w", zipfile.ZIP_DEFLATED) as archive:
+            archive.writestr("logs/run.log", log.read_bytes())
+        inventory = json.loads(run("list-input", zipped_game).stdout)
+        assert inventory["members"] == ["Game/eboot.bin"]
+        archive_report = json.loads(run("diagnose", zipped_game, "--log", zipped_log).stdout)
+        validate("research", archive_report)
+        assert archive_report["evidence"]["game"]["sha256"] == inspected["fingerprint"]["sha256"]
+        assert archive_report["evidence"]["log"]["rawText"] == parsed["rawText"]
+        assert archive_report["evidence"]["game"]["executablePath"].endswith("!/Game/eboot.bin")
+        explicit = json.loads(run("binary-info", str(zipped_game) + "!/Game/eboot.bin").stdout)
+        validate("binary-inspection", explicit)
+        run("parse-log", str(zipped_log) + "!/missing.log", expected=3)
+        package = directory / "Game.pkg"
+        package.write_bytes(b"\x7fCNT" + bytes(124))
+        package_report = json.loads(run("diagnose", package, "--log", zipped_log).stdout)
+        validate("research", package_report)
+        assert package_report["binary"] is None and package_report["evidence"]["game"]["sha256"] is None
         knowledge = json.loads((ROOT / "examples/knowledge.json").read_text())
         provenance = knowledge["families"][0]["provenance"]
         provenance["date"] = "2026-10-06T00:00:00+00:00"  # Canonical DateTimeOffset representation of the same instant.
