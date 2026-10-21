@@ -42,6 +42,16 @@ public sealed partial class MainWindow : Window
     {
         if (await PickFile("Select related executable") is { } path) { ViewModel.RelatedPath = path; }
     }
+    private async void ChoosePatch(object? sender, RoutedEventArgs e)
+    {
+        if (await PickFile("Select AI patch output for inspection") is { } path) { ViewModel.PatchPath = path; }
+    }
+    private async void ChooseTransactionParent(object? sender, RoutedEventArgs e)
+    {
+        var selected = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions { Title = "Select parent for a new transaction, or select an existing transaction", AllowMultiple = false });
+        if (selected.Count != 1 || selected[0].TryGetLocalPath() is not { } path) { return; }
+        ViewModel.TransactionPath = File.Exists(Path.Combine(path, "transaction.json")) ? path : Path.Combine(path, "thanos-transaction-" + (ViewModel.CurrentPatch?.PatchId ?? "new"));
+    }
     private async void ExportReport(object? sender, RoutedEventArgs e)
     {
         try
@@ -100,6 +110,46 @@ public sealed partial class MainWindow : Window
     private async void CopyReport(object? sender, RoutedEventArgs e)
     {
         await new AvaloniaClipboardService(this).SetTextAsync(ViewModel.Report);
+    }
+    private async void ApplyPatch(object? sender, RoutedEventArgs e)
+    {
+        var patch = ViewModel.CurrentPatch;
+        if (patch is null || string.IsNullOrWhiteSpace(ViewModel.TransactionPath)) { ViewModel.Status = "Select a new transaction directory before applying."; return; }
+        if (await ConfirmAsync("Create validated working copy?", $"Approve patch ID {patch.PatchId}?\n\nTHANOS will copy the game, preserve a target backup, and modify only the working copy at {ViewModel.TransactionPath}. Compatibility remains unverified."))
+        {
+            await ViewModel.ApplyApprovedAsync();
+        }
+    }
+    private async void RollbackPatch(object? sender, RoutedEventArgs e)
+    {
+        var transaction = ViewModel.CurrentTransaction;
+        if (transaction is not null && await ConfirmAsync("Rollback working copy?", $"Approve transaction ID {transaction.TransactionId}?\n\nThe transaction working directory will be deleted. Its backup and metadata will remain."))
+        {
+            await ViewModel.RollbackApprovedAsync(false);
+        }
+    }
+    private async void RestoreOriginal(object? sender, RoutedEventArgs e)
+    {
+        var transaction = ViewModel.CurrentTransaction;
+        if (transaction is not null && await ConfirmAsync("Restore exact original target?", $"Approve transaction ID {transaction.TransactionId} and original root:\n{transaction.OriginalRoot}\n\nThe recorded backup will replace the target. Displaced bytes will first be copied into this transaction's recovery folder."))
+        {
+            await ViewModel.RollbackApprovedAsync(true);
+        }
+    }
+    private async Task<bool> ConfirmAsync(string title, string message)
+    {
+        var dialog = new Window { Title = title, Width = 560, SizeToContent = SizeToContent.Height, CanResize = false, WindowStartupLocation = WindowStartupLocation.CenterOwner };
+        var approve = new Button { Content = "Approve", HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right };
+        var cancel = new Button { Content = "Cancel", HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right };
+        approve.Click += (_, _) => dialog.Close(true);
+        cancel.Click += (_, _) => dialog.Close(false);
+        dialog.Content = new StackPanel
+        {
+            Margin = new Avalonia.Thickness(20),
+            Spacing = 14,
+            Children = { new TextBlock { Text = message, TextWrapping = Avalonia.Media.TextWrapping.Wrap }, new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Spacing = 8, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right, Children = { cancel, approve } } }
+        };
+        return await dialog.ShowDialog<bool>(this);
     }
 }
 

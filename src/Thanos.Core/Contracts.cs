@@ -47,6 +47,14 @@ public interface IKnowledgeStore
 public interface IBinaryAnalyzer { Task<GameFingerprint> AnalyzeAsync(string path, CancellationToken cancellationToken = default); }
 public interface ICompatibilitySource { Task<GameFamily[]> FindFamiliesAsync(GameFingerprint game, CancellationToken cancellationToken = default); }
 public interface IPatchProvider { Task<PatchProposal[]> FindPatchesAsync(GameFingerprint game, CancellationToken cancellationToken = default); }
+public interface IPatchImportService { Task<PatchImportResult> ImportAsync(string path, CancellationToken cancellationToken = default); }
+public interface IPatchValidationService { Task<PatchValidationResult> ValidateAsync(PatchProposal patch, string gameInput, ResearchReport? research = null, CancellationToken cancellationToken = default); }
+public interface IPatchTransactionService
+{
+    Task<PatchTransaction> ApplyAsync(PatchProposal patch, string gameInput, string transactionDirectory, string approvalPatchId, ResearchReport? research = null, CancellationToken cancellationToken = default);
+    Task<PatchTransaction> InspectAsync(string transactionDirectory, CancellationToken cancellationToken = default);
+    Task<PatchTransaction> RollbackAsync(string transactionDirectory, string approvalTransactionId, string? confirmedOriginalRoot = null, CancellationToken cancellationToken = default);
+}
 public interface IAIPromptTemplate { PromptMode Mode { get; } string Render(AnalysisReport report); }
 public interface IAIPromptGenerator
 {

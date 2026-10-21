@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Xx-LiDAF-xX/THANOS/main/schemas/patch-import-schema-v1.json",
+  "title": "patch-import",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "normalized",
+        "inspectionRequired",
+        "rejected"
+      ]
+    },
+    "detectedFormat": {
+      "type": "string"
+    },
+    "patch": {
+      "anyOf": [
+        {
+          "$ref": "patch-schema-v1.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "status",
+    "detectedFormat",
+    "patch",
+    "findings",
+    "limitations"
+  ],
+  "additionalProperties": false
+}

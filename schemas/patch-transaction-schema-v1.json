@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Xx-LiDAF-xX/THANOS/main/schemas/patch-transaction-schema-v1.json",
+  "title": "patch-transaction",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "transactionId": {
+      "type": "string"
+    },
+    "patchId": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "applied",
+        "rolledBack"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "originalRoot": {
+      "type": "string"
+    },
+    "targetRelativePath": {
+      "type": "string"
+    },
+    "originalSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "backupSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "candidateSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "workingRoot": {
+      "const": "working"
+    },
+    "backupRoot": {
+      "const": "backup"
+    },
+    "fileOffset": {
+      "$ref": "common-schema-v1.json#/$defs/BinaryAddress"
+    },
+    "length": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "transactionId",
+    "patchId",
+    "status",
+    "createdAt",
+    "updatedAt",
+    "originalRoot",
+    "targetRelativePath",
+    "originalSha256",
+    "backupSha256",
+    "candidateSha256",
+    "workingRoot",
+    "backupRoot",
+    "fileOffset",
+    "length",
+    "limitations"
+  ],
+  "additionalProperties": false
+}

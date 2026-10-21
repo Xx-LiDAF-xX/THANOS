@@ -8,6 +8,9 @@ public enum VerificationStatus { Unverified, CommunityReported, Repeated, Confir
 public enum RelationshipStrength { ExactFamily, Strong, Probable, Weak, Unknown }
 public enum TestOutcome { Pass, Fail, Improved, Regressed, Inconclusive }
 public enum PromptMode { Diagnose, FindExistingFix, WritePatch, PortPatch, CompareBuilds, InvestigateEmulatorIssue, OptimizePerformance, DeepReverseEngineering }
+public enum PatchImportStatus { Normalized, InspectionRequired, Rejected }
+public enum PatchValidationStatus { Valid, Rejected }
+public enum PatchTransactionStatus { Applied, RolledBack }
 
 public sealed record BinaryAddress(AddressSpace AddressSpace, string Value);
 public sealed record Evidence(string Source, string Detail, int? LineNumber = null);
@@ -138,6 +141,50 @@ public sealed record PatchProposal
     public required Provenance Provenance { get; init; }
     public string[] VerificationRules { get; init; } = [];
     public required string Risk { get; init; }
+}
+
+public sealed record PatchCheck(string Name, bool Passed, bool Critical, string Detail, Evidence[] Evidence);
+
+public sealed record PatchImportResult
+{
+    public int SchemaVersion { get; init; } = 1;
+    public PatchImportStatus Status { get; init; }
+    public required string DetectedFormat { get; init; }
+    public PatchProposal? Patch { get; init; }
+    public string[] Findings { get; init; } = [];
+    public string[] Limitations { get; init; } = [];
+}
+
+public sealed record PatchValidationResult
+{
+    public int SchemaVersion { get; init; } = 1;
+    public required string PatchId { get; init; }
+    public PatchValidationStatus Status { get; init; }
+    public string? TargetPath { get; init; }
+    public string? TargetSha256 { get; init; }
+    public BinaryAddress? FileOffset { get; init; }
+    public PatchCheck[] Checks { get; init; } = [];
+    public string[] Limitations { get; init; } = [];
+}
+
+public sealed record PatchTransaction
+{
+    public int SchemaVersion { get; init; } = 1;
+    public required string TransactionId { get; init; }
+    public required string PatchId { get; init; }
+    public PatchTransactionStatus Status { get; init; }
+    public DateTimeOffset CreatedAt { get; init; }
+    public DateTimeOffset UpdatedAt { get; init; }
+    public required string OriginalRoot { get; init; }
+    public required string TargetRelativePath { get; init; }
+    public required string OriginalSha256 { get; init; }
+    public required string BackupSha256 { get; init; }
+    public required string CandidateSha256 { get; init; }
+    public required string WorkingRoot { get; init; }
+    public required string BackupRoot { get; init; }
+    public required BinaryAddress FileOffset { get; init; }
+    public long Length { get; init; }
+    public string[] Limitations { get; init; } = [];
 }
 
 public sealed record AIPrompt

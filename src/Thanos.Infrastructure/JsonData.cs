@@ -35,4 +35,8 @@ public static class ServiceFactory
     }
 
     public static IResearchService CreateResearchService() => new ResearchService(CreateAnalysisService(), CreateBinaryAnalyzer(), new DiagnosisEngine());
+
+    public static IPatchImportService CreatePatchImporter() => new PatchImportService();
+    public static IPatchValidationService CreatePatchValidator() => new PatchValidationService();
+    public static IPatchTransactionService CreatePatchTransactions() => new PatchTransactionService(CreatePatchValidator());
 }

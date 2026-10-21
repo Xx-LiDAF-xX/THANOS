@@ -9,7 +9,7 @@ namespace Thanos.Cli;
 internal static class Program
 {
     private const string Help = """
-        THANOS 0.3.0 — Kyty compatibility research (Phase 3)
+        THANOS 0.4.0 — Kyty compatibility research and patch transactions (Phase 4)
 
         kytyfixer fingerprint <game-directory-file-or-archive>
         kytyfixer detect-kyty <executable>
@@ -18,6 +18,10 @@ internal static class Program
         kytyfixer generate-prompt <game> [--kyty <file>] [--log <file>] [--related <file>] [--knowledge <json> | --database <db>] [--mode <mode>] [--output <new.md>] [--bundle <new.zip>]
         kytyfixer generate-prompt <analysis-or-research.json> [--mode <mode>] [--output <new.md>] [--bundle <new.zip>]
         kytyfixer generate-prompt --report <analysis-or-research.json> [--mode <mode>] [--output <new.md>] [--bundle <new.zip>]
+        kytyfixer normalize-patch <ai-output> [--output <new-patch.json>]
+        kytyfixer validate-patch <patch.json> --game <file-or-folder> [--research <research.json>]
+        kytyfixer apply-patch <patch.json> --game <file-or-folder> --transaction <new-directory> --approve <patch-id> [--research <research.json>]
+        kytyfixer rollback <transaction-directory> --approve <transaction-id> [--restore-original <exact-original-root>]
         kytyfixer analyze <game> [--kyty <file>] [--log <file>] [--database <db>]
         kytyfixer diagnose <game> [--kyty <file>] [--log <file>] [--related <file>] [--knowledge <json> | --database <db>]
         kytyfixer binary-info <file>
@@ -43,8 +47,10 @@ internal static class Program
         investigateEmulatorIssue, optimizePerformance, deepReverseEngineering.
         Prompt commands emit AIPrompt JSON; --output exports text and --bundle packages
         complete research/prompt evidence with SHA-256 manifest. Existing exports are not replaced.
-        validate-patch, apply-patch, test, compare, benchmark and report
-        are roadmap commands. There is no emulator execution or game modification.
+        Patch JSON is validated against exact hashes, ELF mappings, signatures, bytes and
+        optional identity/version research. Apply writes only a separate working copy.
+        Scripts/diffs/binary patches are inspect-only and never executed automatically.
+        test, compare, benchmark and report are roadmap commands. There is no emulator execution.
         """;
 
     private static async Task<int> Main(string[] args)
@@ -120,6 +126,39 @@ internal static class Program
                     var exportStore = new SqliteKnowledgeStore(database);
                     await exportStore.InitializeAsync(token);
                     result = await exportStore.ExportKnowledgeAsync(token);
+                    break;
+                case ["normalize-patch", var patchInput, .. var normalizeTrailing]:
+                    if (normalizeTrailing is not ([] or ["--output", _])) { Console.Error.WriteLine("Usage: normalize-patch <ai-output> [--output <new-patch.json>]"); return 2; }
+                    var importedPatch = await ServiceFactory.CreatePatchImporter().ImportAsync(patchInput, token);
+                    if (normalizeTrailing is ["--output", var normalizedOutput])
+                    {
+                        if (importedPatch.Patch is null) { throw new InvalidDataException("Input could not be normalized to actionable PatchProposal JSON."); }
+                        await WriteNewJsonAsync(normalizedOutput, importedPatch.Patch, token);
+                    }
+                    result = importedPatch;
+                    break;
+                case ["validate-patch", var validationInput, .. var validationTrailing]:
+                    var validationOptions = ParseOptions(validationTrailing, "--game", "--research");
+                    if (validationOptions is null || !validationOptions.TryGetValue("--game", out var validationGame)) { Console.Error.WriteLine("Usage: validate-patch <patch.json> --game <file-or-folder> [--research <research.json>]"); return 2; }
+                    var validationPatch = await RequirePatchAsync(validationInput, token);
+                    var validationResearch = validationOptions.TryGetValue("--research", out var validationResearchPath) ? await ResearchJson.ReadAsync(validationResearchPath, token) : null;
+                    result = await ServiceFactory.CreatePatchValidator().ValidateAsync(validationPatch, validationGame, validationResearch, token);
+                    break;
+                case ["apply-patch", var applyInput, .. var applyTrailing]:
+                    var applyOptions = ParseOptions(applyTrailing, "--game", "--transaction", "--approve", "--research");
+                    if (applyOptions is null || !applyOptions.TryGetValue("--game", out var applyGame) || !applyOptions.TryGetValue("--transaction", out var transactionDirectory) || !applyOptions.TryGetValue("--approve", out var patchApproval))
+                    {
+                        Console.Error.WriteLine("Usage: apply-patch <patch.json> --game <file-or-folder> --transaction <new-directory> --approve <patch-id> [--research <research.json>]"); return 2;
+                    }
+                    var applyPatch = await RequirePatchAsync(applyInput, token);
+                    var applyResearch = applyOptions.TryGetValue("--research", out var applyResearchPath) ? await ResearchJson.ReadAsync(applyResearchPath, token) : null;
+                    result = await ServiceFactory.CreatePatchTransactions().ApplyAsync(applyPatch, applyGame, transactionDirectory, patchApproval, applyResearch, token);
+                    break;
+                case ["rollback", var rollbackDirectory, .. var rollbackTrailing]:
+                    var rollbackOptions = ParseOptions(rollbackTrailing, "--approve", "--restore-original");
+                    if (rollbackOptions is null || !rollbackOptions.TryGetValue("--approve", out var transactionApproval)) { Console.Error.WriteLine("Usage: rollback <transaction-directory> --approve <transaction-id> [--restore-original <exact-original-root>]"); return 2; }
+                    rollbackOptions.TryGetValue("--restore-original", out var confirmedOriginal);
+                    result = await ServiceFactory.CreatePatchTransactions().RollbackAsync(rollbackDirectory, transactionApproval, confirmedOriginal, token);
                     break;
                 default:
                     if (args.Length < 2 || args[0] is not ("analyze" or "diagnose" or "generate-prompt"))
@@ -199,5 +238,31 @@ internal static class Program
             Console.Error.WriteLine($"Error: {ex.Message}");
             return 3;
         }
+    }
+
+    private static Dictionary<string, string>? ParseOptions(string[] arguments, params string[] allowed)
+    {
+        if (arguments.Length % 2 != 0) { return null; }
+        var result = new Dictionary<string, string>(StringComparer.Ordinal);
+        for (var i = 0; i < arguments.Length; i += 2)
+        {
+            if (!allowed.Contains(arguments[i], StringComparer.Ordinal) || !result.TryAdd(arguments[i], arguments[i + 1])) { return null; }
+        }
+        return result;
+    }
+
+    private static async Task<PatchProposal> RequirePatchAsync(string path, CancellationToken token)
+    {
+        var imported = await ServiceFactory.CreatePatchImporter().ImportAsync(path, token);
+        return imported.Status == PatchImportStatus.Normalized && imported.Patch is not null ? imported.Patch : throw new InvalidDataException("PATCH REJECTED: input did not normalize to versioned PatchProposal JSON.");
+    }
+
+    private static async Task WriteNewJsonAsync<T>(string path, T value, CancellationToken token)
+    {
+        var fullPath = Path.GetFullPath(path);
+        Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
+        await using var output = new FileStream(fullPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 65536, FileOptions.Asynchronous);
+        await JsonSerializer.SerializeAsync(output, value, JsonData.Options, token);
+        await output.FlushAsync(token);
     }
 }

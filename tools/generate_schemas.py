@@ -89,6 +89,14 @@ SCHEMAS.update({
 DEFS["PackageEntry"] = obj(dict(file=STRING, sha256=HASH, bytes={"type": "integer", "minimum": 0}))
 SCHEMAS["evidence-package"] = dict(templateVersion={"const": "1"}, mode=SCHEMAS["ai-prompt"]["mode"], entries=array(common("PackageEntry")), limitations=array())
 
+# Phase 4 preserves PatchProposal v1 and adds workflow result/transaction contracts.
+DEFS["PatchCheck"] = obj(dict(name=STRING, passed={"type": "boolean"}, critical={"type": "boolean"}, detail=STRING, evidence=EVIDENCE))
+SCHEMAS.update({
+    "patch-import": dict(status=enum("normalized", "inspectionRequired", "rejected"), detectedFormat=STRING, patch=nullable(ref("patch")), findings=array(), limitations=array()),
+    "patch-validation": dict(patchId=STRING, status=enum("valid", "rejected"), targetPath=nullable(STRING), targetSha256=nullable(HASH), fileOffset=nullable(common("BinaryAddress")), checks=array(common("PatchCheck")), limitations=array()),
+    "patch-transaction": dict(transactionId=STRING, patchId=STRING, status=enum("applied", "rolledBack"), createdAt={"type": "string", "format": "date-time"}, updatedAt={"type": "string", "format": "date-time"}, originalRoot=STRING, targetRelativePath=STRING, originalSha256=HASH, backupSha256=HASH, candidateSha256=HASH, workingRoot={"const": "working"}, backupRoot={"const": "backup"}, fileOffset=common("BinaryAddress"), length={"type": "integer", "minimum": 1}, limitations=array()),
+})
+
 
 def generate(check=False):
     documents = {name: obj(dict(schemaVersion={"const": 1}, **properties)) for name, properties in SCHEMAS.items()}

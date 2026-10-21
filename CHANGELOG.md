@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.0 - Unreleased
+
+- Added Phase 4 patch import and normalization for pure JSON, Markdown code blocks, source diffs, scripts, and binary patches; non-JSON formats remain inspection-only and are never executed.
+- Added strict shape and wire normalization for PatchProposal v1, requiring unverified external-AI provenance.
+- Added comprehensive binary patch validation: target resolution, SHA-256 integrity, ELF format/architecture checks, research context alignment, address mapping to unique file offsets, file-backed PT_LOAD range bounds, exact original bytes, exact signature match count and location (no nearby substitution), and distinct equal-length replacement bytes.
+- Added isolated patch transaction service: atomic staging, locked original reading, pristine backup creation, separate working-copy modification, and rollback with optional explicit original target restoration and displaced-bytes recovery.
+- Added CLI commands: normalize-patch, validate-patch, apply-patch, and rollback with required explicit approvals.
+- Added Avalonia desktop Patch validation / transaction tab with workflow actions and modal confirmation dialogs.
+- Added patch-import, patch-validation, and patch-transaction v1 JSON schemas and common PatchCheck definition.
+
 ## 0.3.0 - Unreleased
 
 - Added eight external-AI prompt modes with complete research evidence, UNKNOWN rules and mode-specific requirements.

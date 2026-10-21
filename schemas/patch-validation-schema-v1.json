@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Xx-LiDAF-xX/THANOS/main/schemas/patch-validation-schema-v1.json",
+  "title": "patch-validation",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "patchId": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "valid",
+        "rejected"
+      ]
+    },
+    "targetPath": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "targetSha256": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "fileOffset": {
+      "anyOf": [
+        {
+          "$ref": "common-schema-v1.json#/$defs/BinaryAddress"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "$ref": "common-schema-v1.json#/$defs/PatchCheck"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "patchId",
+    "status",
+    "targetPath",
+    "targetSha256",
+    "fileOffset",
+    "checks",
+    "limitations"
+  ],
+  "additionalProperties": false
+}
