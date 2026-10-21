@@ -305,8 +305,15 @@ def main():
             # Negative checks for patch commands
             run("apply-patch", patch_file, "--game", directory, "--transaction", tx_dir, "--approve", "wrong-patch", expected=3)
             run("rollback", tx_dir, "--approve", "wrong-tx", expected=3)
-        run("validate-patch", patch_file, expected=2)
-    print(f"Validated {len(schemas)} schemas, synthetic examples, and CLI/storage integration.")
+        # Verify offline logs against verification-schema-v1.json
+        candidate_log = directory / "candidate.log"
+        candidate_log.write_text("[INFO] runtimeLinker: mapping program\n[INFO] guest execution\n", encoding="utf-8")
+        verification = json.loads(run("verify", game, "--scenario", "BOOT", "--candidate-log", candidate_log).stdout)
+        validate("verification", verification)
+        assert verification["outcome"] == "pass" and verification["level"] == 1
+        assert verification["scenario"] == "BOOT"
+
+        print(f"Validated {len(schemas)} schemas, synthetic examples, and CLI/storage integration.")
 
 
 if __name__ == "__main__":

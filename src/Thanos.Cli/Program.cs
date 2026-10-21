@@ -6,10 +6,10 @@ using Thanos.Infrastructure.Storage;
 
 namespace Thanos.Cli;
 
-internal static class Program
+public static class Program
 {
     private const string Help = """
-        THANOS 0.4.0 — Kyty compatibility research and patch transactions (Phase 4)
+        THANOS 0.5.0 — Kyty compatibility research, patch transactions and emulator verification (Phase 5)
 
         kytyfixer fingerprint <game-directory-file-or-archive>
         kytyfixer detect-kyty <executable>
@@ -22,6 +22,7 @@ internal static class Program
         kytyfixer validate-patch <patch.json> --game <file-or-folder> [--research <research.json>]
         kytyfixer apply-patch <patch.json> --game <file-or-folder> --transaction <new-directory> --approve <patch-id> [--research <research.json>]
         kytyfixer rollback <transaction-directory> --approve <transaction-id> [--restore-original <exact-original-root>]
+        kytyfixer verify <game> [--kyty <file>] [--scenario <BOOT|MENU|GAMEPLAY|CRASH REPRODUCTION|STABILITY|PERFORMANCE>] [--candidate-log <file>] [--baseline-log <file>] [--transaction <dir>] [--timeout <sec>] [--output <file>] [--database <db>]
         kytyfixer analyze <game> [--kyty <file>] [--log <file>] [--database <db>]
         kytyfixer diagnose <game> [--kyty <file>] [--log <file>] [--related <file>] [--knowledge <json> | --database <db>]
         kytyfixer binary-info <file>
@@ -50,10 +51,11 @@ internal static class Program
         Patch JSON is validated against exact hashes, ELF mappings, signatures, bytes and
         optional identity/version research. Apply writes only a separate working copy.
         Scripts/diffs/binary patches are inspect-only and never executed automatically.
-        test, compare, benchmark and report are roadmap commands. There is no emulator execution.
+        verify runs capability-backed Kyty execution or evaluates offline run logs against
+        verification levels 0-7, reporting PASS/FAIL/IMPROVED/REGRESSED/INCONCLUSIVE.
         """;
 
-    private static async Task<int> Main(string[] args)
+    public static async Task<int> Main(string[] args)
     {
         using var cancellation = new CancellationTokenSource();
         Console.CancelKeyPress += (_, e) => { e.Cancel = true; cancellation.Cancel(); };
@@ -159,6 +161,64 @@ internal static class Program
                     if (rollbackOptions is null || !rollbackOptions.TryGetValue("--approve", out var transactionApproval)) { Console.Error.WriteLine("Usage: rollback <transaction-directory> --approve <transaction-id> [--restore-original <exact-original-root>]"); return 2; }
                     rollbackOptions.TryGetValue("--restore-original", out var confirmedOriginal);
                     result = await ServiceFactory.CreatePatchTransactions().RollbackAsync(rollbackDirectory, transactionApproval, confirmedOriginal, token);
+                    break;
+                case ["verify", .. var verifyTrailing]:
+                    var verifyPositionalGame = verifyTrailing.Length > 0 && !verifyTrailing[0].StartsWith("--") ? verifyTrailing[0] : null;
+                    var verifyOptionsArgs = verifyPositionalGame is not null ? verifyTrailing[1..] : verifyTrailing;
+                    var verifyOptions = ParseOptions(verifyOptionsArgs, "--game", "--kyty", "--scenario", "--candidate-log", "--baseline-log", "--transaction", "--timeout", "--output", "--database");
+                    if (verifyOptions is null)
+                    {
+                        Console.Error.WriteLine("Usage: verify [<game>] [--game <file-or-folder>] [--kyty <executable>] [--scenario <name>] [--candidate-log <file>] [--baseline-log <file>] [--transaction <dir>] [--timeout <seconds>] [--output <file>] [--database <db>]");
+                        return 2;
+                    }
+                    var gameTarget = verifyPositionalGame ?? (verifyOptions.TryGetValue("--game", out var g) ? g : null);
+                    if (string.IsNullOrWhiteSpace(gameTarget))
+                    {
+                        Console.Error.WriteLine("Error: verify requires a target game file or folder (via argument or --game).");
+                        return 2;
+                    }
+                    var scenarioType = ScenarioType.Boot;
+                    if (verifyOptions.TryGetValue("--scenario", out var scenarioWireName))
+                    {
+                        try { scenarioType = ScenarioDefinition.ParseWireName(scenarioWireName); }
+                        catch { Console.Error.WriteLine($"Unrecognized scenario '{scenarioWireName}'."); return 2; }
+                    }
+                    var scenarioDef = ScenarioDefinition.CreateBuiltIn(scenarioType);
+                    if (verifyOptions.TryGetValue("--timeout", out var timeoutStr))
+                    {
+                        if (!int.TryParse(timeoutStr, out var timeoutSec) || timeoutSec <= 0)
+                        {
+                            Console.Error.WriteLine("Timeout must be a positive integer in seconds.");
+                            return 2;
+                        }
+                        scenarioDef = scenarioDef with { Timeout = TimeSpan.FromSeconds(timeoutSec) };
+                    }
+                    verifyOptions.TryGetValue("--kyty", out var verifyKyty);
+                    verifyOptions.TryGetValue("--transaction", out var verifyTx);
+                    verifyOptions.TryGetValue("--baseline-log", out var verifyBaselineLog);
+                    verifyOptions.TryGetValue("--candidate-log", out var verifyCandidateLog);
+
+                    var verifyResult = await ServiceFactory.CreateVerificationService().VerifyAsync(
+                        scenarioDef,
+                        gameTarget,
+                        verifyKyty,
+                        verifyTx,
+                        verifyBaselineLog,
+                        verifyCandidateLog,
+                        token);
+
+                    if (verifyOptions.TryGetValue("--output", out var verifyOutput))
+                    {
+                        await WriteNewJsonAsync(verifyOutput, verifyResult, token);
+                    }
+                    if (verifyOptions.TryGetValue("--database", out var verifyDb))
+                    {
+                        var dbStore = new SqliteKnowledgeStore(verifyDb);
+                        await dbStore.InitializeAsync(token);
+                        await dbStore.SaveVerificationAsync(verifyResult.Id, verifyResult, token);
+                        Console.Error.WriteLine($"Saved verification: {verifyResult.Id}");
+                    }
+                    result = verifyResult;
                     break;
                 default:
                     if (args.Length < 2 || args[0] is not ("analyze" or "diagnose" or "generate-prompt"))

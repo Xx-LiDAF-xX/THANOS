@@ -2,7 +2,7 @@
 
 Open-source, cross-platform evidence collection and compatibility research for games tested through Kyty. GPL-3.0-or-later.
 
-**Status: Phase 4 / 0.4.0 patch validation and working-copy transactions.** The CLI and Avalonia desktop shell share evidence, research and patch transaction services. Phase 2 adds accessible ELF analysis, error correlation, root-cause candidates, binary relationships and a provenanced local knowledge base. Phase 3 adds eight prompt modes, weighted evidence readiness and prompt/evidence ZIP export. Phase 4 adds AI patch normalization, guarded ELF validation, working-copy backups and atomic transactions with rollback. Emulator execution and runtime verification remain later phases.
+**Status: Phase 5 / 0.5.0 emulator runner and verification levels.** The CLI and Avalonia desktop shell share evidence, research, patch transactions and runtime verification services. Phase 2 adds accessible ELF analysis, error correlation, root-cause candidates, binary relationships and a provenanced local knowledge base. Phase 3 adds eight prompt modes, weighted evidence readiness and prompt/evidence ZIP export. Phase 4 adds AI patch normalization, guarded ELF validation, working-copy backups and atomic transactions with rollback. Phase 5 adds build-specific capability adapters, streaming process execution, scenario definitions, incremental log capture without buffer limits, baseline/candidate comparison, and verification level 0–7 outcome evaluation.
 
 ## What works
 
@@ -13,7 +13,7 @@ Open-source, cross-platform evidence collection and compatibility research for g
 - Parse complete UTF-8 logs without configured byte, line-count or line-length limits; preserve raw text/hash and line order, identify initial error categories, capture log-reported metadata and hardware.
 - Read game/log ZIPs and selected archive members; support RAR/7z/tar through libarchive and Kyty ZAR through the bundled Python reader. Load PKG as partial package evidence. See [input formats and helper requirements](docs/INPUTS.md).
 - Export JSON and store/retrieve evidence reports in a migrated SQLite database.
-- Use the desktop shell to select paths, analyze, generate any prompt mode, inspect readiness/missing evidence, copy/export JSON, prompt text or an evidence ZIP, and inspect, validate, apply or roll back patches.
+- Use the desktop shell to select paths, analyze, generate any prompt mode, inspect readiness/missing evidence, copy/export JSON, prompt text or an evidence ZIP, inspect, validate, apply or roll back patches, and run or evaluate scenario verification.
 - Inspect accessible ELF32/64 sections, segments, symbols, dynamic imports/exports, relocations, ASCII strings, executable-section hashes and symbol-bounded function hashes.
 - Map file, virtual and runtime addresses through unique PT_LOAD mappings; runtime mapping requires an explicit load bias. Zero-filled memory cannot be mapped to file bytes.
 - Match literal error signatures, identify the earliest observed error candidate and separate possible downstream effects from independent failures. Every root-cause candidate carries facts, evidence, hypotheses, confidence and a recommendation.
@@ -23,8 +23,14 @@ Open-source, cross-platform evidence collection and compatibility research for g
 - Validate patch proposals against exact target file hashes, accessible ELF structures, unique PT_LOAD address mappings, modification bounds, exact original bytes, and exact signature match counts/locations without nearby substitution.
 - Create atomic working-copy transactions with locked original reading, pristine target backups, and separate working-copy candidate binaries. Original game directories are never modified during apply.
 - Inspect and roll back transactions with explicit approval checks; optionally restore pristine backups to the original root while preserving displaced bytes in recovery.
+- Run build-specific Kyty capability adapters (`DefaultKytyAdapter`, `KytyPs5Adapter`) without guessing or fabricating unsupported CLI options.
+- Stream execution stdout, stderr, and active log files incrementally without configured byte or line limits.
+- Guarantee clean process tree termination on timeout or cancellation without leaving orphaned child processes.
+- Classify execution evidence across verification levels 0 through 7 (None, Boot, Intro, Menu, InGame, Playable, Complete, Perfect).
+- Compare baseline failure logs against candidate working-copy runs to determine PASS, FAIL, IMPROVED, REGRESSED, or INCONCLUSIVE outcomes.
+- Store and retrieve `VerificationResult` records in SQLite knowledge storage with additive provenance enforcement.
 
-Unknown identities, engines and versions remain null. Family assignment requires explicit confirmed/tool-verified family and exact-hash binding records; those imported statuses are source claims, not independently authenticated by THANOS. Unverified family claims appear as related knowledge without assigning identity. Lexical matches are hypotheses, not established root causes or verified fixes. Protected or unfamiliar files still receive a hash and partial analysis, with log diagnosis available. Patch validation confirms structural and byte safety; compatibility remains unverified until later runtime verification phases.
+Unknown identities, engines and versions remain null. Family assignment requires explicit confirmed/tool-verified family and exact-hash binding records; those imported statuses are source claims, not independently authenticated by THANOS. Unverified family claims appear as related knowledge without assigning identity. Lexical matches are hypotheses, not established root causes or verified fixes. Protected or unfamiliar files still receive a hash and partial analysis, with log diagnosis available. Patch validation confirms structural and byte safety; verification results report empirical execution evidence without fabricating compatibility claims.
 
 ## Build and test
 

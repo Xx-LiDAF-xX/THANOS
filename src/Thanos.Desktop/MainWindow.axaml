@@ -4,7 +4,7 @@
   <Grid Margin="28" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,*" RowSpacing="12">
     <StackPanel Grid.Row="0" Spacing="6">
       <TextBlock Text="THANOS" FontSize="30" FontWeight="Bold" />
-      <TextBlock Text="Kyty compatibility research · Phase 4 validated working-copy transactions" Foreground="#A9B7C9" />
+      <TextBlock Text="Kyty compatibility research · Phase 5 emulator runner and verification levels 0-7" Foreground="#A9B7C9" />
     </StackPanel>
     <Grid Grid.Row="1" ColumnDefinitions="140,*,Auto" ColumnSpacing="10">
       <TextBlock Text="Game folder / file" VerticalAlignment="Center" />
@@ -69,6 +69,17 @@
             <Button Content="Restore original from backup…" Click="RestoreOriginal" IsEnabled="{Binding HasTransaction}" Margin="0,0,8,8" />
           </WrapPanel>
           <TextBox Grid.Row="3" Text="{Binding PatchOutput}" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" />
+        </Grid>
+      </TabItem>
+      <TabItem Header="Verification / Runner">
+        <Grid RowDefinitions="Auto,Auto,*" RowSpacing="8" Margin="8">
+          <Grid Grid.Row="0" ColumnDefinitions="120,*,Auto" ColumnSpacing="8">
+            <TextBlock Text="Scenario" VerticalAlignment="Center" />
+            <ComboBox Grid.Column="1" ItemsSource="{Binding Scenarios}" SelectedItem="{Binding SelectedScenario}" HorizontalAlignment="Stretch" />
+            <Button Grid.Column="2" Content="Run verification" Command="{Binding VerifyCommand}" />
+          </Grid>
+          <TextBlock Grid.Row="1" Text="{Binding VerificationStatusText}" Foreground="#A9B7C9" TextWrapping="Wrap" />
+          <TextBox Grid.Row="2" Text="{Binding VerificationOutput}" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" />
         </Grid>
       </TabItem>
     </TabControl>

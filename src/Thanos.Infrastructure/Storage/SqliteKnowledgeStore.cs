@@ -81,6 +81,90 @@ public sealed class SqliteKnowledgeStore(string databasePath) : IResearchKnowled
         return json is null ? null : JsonData.Deserialize<ResearchReport>(json);
     }
 
+    public async Task SaveVerificationAsync(string id, VerificationResult result, CancellationToken cancellationToken = default)
+    {
+        if (result.SchemaVersion != 1) { throw new InvalidDataException("Unsupported verification schema version."); }
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+
+        await using var connection = new SqliteConnection(connectionString);
+        await connection.OpenAsync(cancellationToken);
+        using var transaction = connection.BeginTransaction();
+
+        using var checkCommand = connection.CreateCommand();
+        checkCommand.Transaction = transaction;
+        checkCommand.CommandText = "SELECT result_json FROM verification_results WHERE id=$id;";
+        checkCommand.Parameters.AddWithValue("$id", id);
+        if (await checkCommand.ExecuteScalarAsync(cancellationToken) is string existing)
+        {
+            var previous = JsonData.Deserialize<VerificationResult>(existing);
+            if (JsonData.Serialize(previous) != JsonData.Serialize(result))
+            {
+                throw new InvalidDataException("Existing verification ID has different outcome/provenance. It cannot be overwritten.");
+            }
+            return;
+        }
+
+        var exeHash = (result.BinarySha256 ?? string.Empty).ToLowerInvariant();
+        if (exeHash.Length == 64)
+        {
+            await InsertAsync(connection, transaction,
+                "INSERT OR IGNORE INTO executables(sha256, fingerprint_json) VALUES($hash, $json);",
+                cancellationToken,
+                ("$hash", exeHash), ("$json", "{\"schemaVersion\":1}"));
+        }
+
+        var kytyHash = (result.KytySha256 ?? string.Empty).ToLowerInvariant();
+        if (kytyHash.Length == 64)
+        {
+            await InsertAsync(connection, transaction,
+                "INSERT OR IGNORE INTO kyty_builds(sha256, fingerprint_json) VALUES($hash, $json);",
+                cancellationToken,
+                ("$hash", kytyHash), ("$json", "{\"schemaVersion\":1}"));
+        }
+
+        var hardwareJson = result.Provenance.Hardware is null ? "{}" : JsonData.Serialize(new { hardware = result.Provenance.Hardware });
+
+        await InsertAsync(connection, transaction,
+            "INSERT INTO verification_results(id, executable_sha256, kyty_sha256, patch_id, hardware_json, result_json, provenance_json) VALUES($id, $exe, $kyty, $patch, $hw, $result, $prov);",
+            cancellationToken,
+            ("$id", id),
+            ("$exe", exeHash),
+            ("$kyty", kytyHash),
+            ("$patch", result.PatchId),
+            ("$hw", hardwareJson),
+            ("$result", JsonData.Serialize(result)),
+            ("$prov", JsonData.Serialize(result.Provenance)));
+
+        transaction.Commit();
+    }
+
+    public async Task<VerificationResult?> GetVerificationAsync(string id, CancellationToken cancellationToken = default)
+    {
+        await using var connection = new SqliteConnection(connectionString);
+        await connection.OpenAsync(cancellationToken);
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT result_json FROM verification_results WHERE id=$id;";
+        command.Parameters.AddWithValue("$id", id);
+        var json = await command.ExecuteScalarAsync(cancellationToken) as string;
+        return json is null ? null : JsonData.Deserialize<VerificationResult>(json);
+    }
+
+    public async Task<IReadOnlyList<VerificationResult>> ListVerificationsAsync(string? binarySha256 = null, CancellationToken cancellationToken = default)
+    {
+        await using var connection = new SqliteConnection(connectionString);
+        await connection.OpenAsync(cancellationToken);
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT result_json FROM verification_results WHERE ($hash IS NULL OR executable_sha256=$hash);";
+        command.Parameters.AddWithValue("$hash", (object?)binarySha256?.ToLowerInvariant() ?? DBNull.Value);
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var list = new List<VerificationResult>();
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            list.Add(JsonData.Deserialize<VerificationResult>(reader.GetString(0)));
+        }
+        return list;
+    }
+
     public async Task ImportKnowledgeAsync(KnowledgeBundle bundle, CancellationToken cancellationToken = default)
     {
         KnowledgeValidation.Validate(bundle);

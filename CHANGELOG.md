@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.0 - Unreleased
+
+- Added Phase 5 emulator runner and verification system with target verification levels 0 to 7 (L0: Crash before Init, L1: Early Init / TLS, L2: Boot / Splash Screen, L3: Title Screen / Menu, L4: In-Game / Intro Cutscene, L5: Stable 3D / Gameplay, L6: Deterministic / Save-Load, L7: Performance / Regression Free).
+- Added build-specific Kyty capability adapters (`IKytyAdapter`, `DefaultKytyAdapter`, `KytyPs5Adapter`, `IKytyAdapterRegistry`) ensuring only vetted flags are provided and refusing unsupported configurations without fabricated options.
+- Added streaming process runner (`IStreamingProcessRunner`, `StreamingProcessRunner`) with unbounded incremental capture of stdout/stderr/log files and reliable cross-platform process tree termination on timeout or cancellation.
+- Added verification engine (`IVerificationEngine`, `VerificationEngine`) evaluating outcomes (Pass, Fail, Improved, Regressed, Inconclusive) against baseline runs, strictly requiring evidence logs for verification proof.
+- Added verification service (`IVerificationService`, `VerificationService`) for live emulator execution and offline log verification.
+- Added SQLite verification store persistence (`SaveVerificationAsync`, `GetVerificationAsync`, `ListVerificationsAsync`) with additive provenance tracking.
+- Added CLI `verify` command supporting `--emulator`, `--game`, `--log`, `--scenario`, `--baseline`, and JSON output, validated against `verification-schema-v1.json`.
+- Added Avalonia desktop `Verification / Runner` tab with live execution, offline verification, log streaming, and status visualization.
+
 ## 0.4.0 - Unreleased
 
 - Added Phase 4 patch import and normalization for pure JSON, Markdown code blocks, source diffs, scripts, and binary patches; non-JSON formats remain inspection-only and are never executed.

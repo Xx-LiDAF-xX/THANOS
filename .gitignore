@@ -10,3 +10,5 @@ artifacts/
 *.user
 *.log
 **/__pycache__/
+.agents/
+graphify-out/
