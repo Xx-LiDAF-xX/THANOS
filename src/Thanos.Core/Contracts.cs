@@ -30,7 +30,17 @@ public interface IClipboardService { Task SetTextAsync(string text); }
 public interface IArchiveService { Task ExtractAsync(string archivePath, string destination, CancellationToken cancellationToken = default); }
 public sealed record ProcessRequest(string Executable, IReadOnlyList<string> Arguments, string? WorkingDirectory, TimeSpan Timeout, IReadOnlyDictionary<string, string> Environment);
 public sealed record ProcessResult(int? ExitCode, string StandardOutput, string StandardError, bool TimedOut);
+public sealed record ProcessOutputChunk(string Text, bool IsError, DateTimeOffset Timestamp);
 public interface IProcessRunner { Task<ProcessResult> RunAsync(ProcessRequest request, CancellationToken cancellationToken = default); }
+public interface IStreamingProcessRunner : IProcessRunner
+{
+    Task<ProcessResult> RunStreamingAsync(
+        ProcessRequest request,
+        Action<ProcessOutputChunk>? onOutput = null,
+        string? logFilePath = null,
+        Action<string>? onLogLine = null,
+        CancellationToken cancellationToken = default);
+}
 
 public interface IGameFingerprinter { Task<GameFingerprint> FingerprintAsync(string input, CancellationToken cancellationToken = default); }
 public interface IKytyCapabilityDetector { Task<KytyFingerprint> DetectAsync(string executable, CancellationToken cancellationToken = default); }
