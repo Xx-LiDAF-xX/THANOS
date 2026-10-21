@@ -10,21 +10,26 @@ public sealed class MainViewModel : INotifyPropertyChanged
 {
     private string gamePath = "", kytyPath = "", logPath = "", knowledgePath = "", relatedPath = "", report = "", promptText = "", readiness = "";
     private string patchPath = "", transactionPath = "", patchOutput = "";
+    private string verificationOutput = "", verificationStatusText = "";
     private string status = "Select game input to collect evidence. Capabilities and compatibility may be UNKNOWN.";
     private int revision;
     private PromptMode mode;
+    private ScenarioType selectedScenario = ScenarioType.Boot;
     private ResearchReport? research;
     private AIPrompt? prompt;
     private PatchProposal? normalizedPatch;
     private PatchValidationResult? patchValidation;
     private PatchTransaction? transaction;
+    private VerificationResult? verificationResult;
     private readonly AsyncCommand generate;
     private readonly AsyncCommand importPatch;
     private readonly AsyncCommand validatePatch;
     private readonly AsyncCommand inspectTransaction;
+    private readonly AsyncCommand verify;
     private readonly IPatchImportService patchImporter;
     private readonly IPatchValidationService patchValidator;
     private readonly IPatchTransactionService patchTransactions;
+    private readonly IVerificationService verificationService;
     public event PropertyChangedEventHandler? PropertyChanged;
     public string GamePath { get => gamePath; set => Input(ref gamePath, value); }
     public string KytyPath { get => kytyPath; set => Input(ref kytyPath, value); }
@@ -38,6 +43,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public bool HasPrompt => prompt is not null;
     public PromptMode[] Modes { get; } = Enum.GetValues<PromptMode>();
     public PromptMode Mode { get => mode; set { if (mode == value) { return; } mode = value; Changed(); ClearPrompt(); } }
+    public ScenarioType[] Scenarios { get; } = Enum.GetValues<ScenarioType>();
+    public ScenarioType SelectedScenario { get => selectedScenario; set { if (Set(ref selectedScenario, value)) { Changed(); } } }
     public string Status { get => status; set => Set(ref status, value); }
     public string PatchPath { get => patchPath; set { if (Set(ref patchPath, value)) { ClearPatch(); importPatch.Refresh(); } } }
     public string TransactionPath { get => transactionPath; set { if (Set(ref transactionPath, value)) { transaction = null; Changed(nameof(HasTransaction)); inspectTransaction.Refresh(); } } }
@@ -45,21 +52,27 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public bool HasPatch => normalizedPatch is not null;
     public bool HasValidPatch => patchValidation?.Status == PatchValidationStatus.Valid;
     public bool HasTransaction => transaction is not null;
+    public string VerificationOutput { get => verificationOutput; private set => Set(ref verificationOutput, value); }
+    public string VerificationStatusText { get => verificationStatusText; private set => Set(ref verificationStatusText, value); }
+    public bool HasVerification => verificationResult is not null;
+    public VerificationResult? CurrentVerification => verificationResult;
     public ICommand AnalyzeCommand { get; }
     public ICommand GeneratePromptCommand => generate;
     public ICommand ImportPatchCommand => importPatch;
     public ICommand ValidatePatchCommand => validatePatch;
     public ICommand InspectTransactionCommand => inspectTransaction;
+    public ICommand VerifyCommand => verify;
     public ResearchReport? CurrentResearch => research;
     public AIPrompt? CurrentPrompt => prompt;
     public PatchProposal? CurrentPatch => normalizedPatch;
     public PatchTransaction? CurrentTransaction => transaction;
 
-    public MainViewModel(IResearchService analysis, IPatchImportService? patchImporter = null, IPatchValidationService? patchValidator = null, IPatchTransactionService? patchTransactions = null)
+    public MainViewModel(IResearchService analysis, IPatchImportService? patchImporter = null, IPatchValidationService? patchValidator = null, IPatchTransactionService? patchTransactions = null, IVerificationService? verificationService = null)
     {
         this.patchImporter = patchImporter ?? ServiceFactory.CreatePatchImporter();
         this.patchValidator = patchValidator ?? ServiceFactory.CreatePatchValidator();
         this.patchTransactions = patchTransactions ?? ServiceFactory.CreatePatchTransactions();
+        this.verificationService = verificationService ?? ServiceFactory.CreateVerificationService();
         importPatch = new AsyncCommand(async () =>
         {
             try
@@ -145,6 +158,35 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 Status = $"Analysis failed: {ex.Message}";
             }
         });
+
+        verify = new AsyncCommand(async () =>
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(GamePath))
+                {
+                    VerificationStatusText = "Error: Select a game folder or executable.";
+                    return;
+                }
+                VerificationStatusText = $"Running verification scenario {selectedScenario}...";
+                var scenario = ScenarioDefinition.CreateBuiltIn(selectedScenario);
+                var candidateLog = !string.IsNullOrWhiteSpace(LogPath) && File.Exists(LogPath) ? LogPath : null;
+                var kyty = !string.IsNullOrWhiteSpace(KytyPath) && File.Exists(KytyPath) ? KytyPath : null;
+                var txDir = !string.IsNullOrWhiteSpace(TransactionPath) && Directory.Exists(TransactionPath) ? TransactionPath : null;
+
+                var res = await this.verificationService.VerifyAsync(scenario, GamePath, kyty, txDir, null, candidateLog);
+                VerificationOutput = JsonData.Serialize(res);
+                VerificationStatusText = $"Outcome: {res.Outcome} · Level: {res.Level} · Scenario: {res.Scenario}";
+                verificationResult = res;
+                Changed(nameof(HasVerification));
+                Changed(nameof(CurrentVerification));
+            }
+            catch (Exception ex)
+            {
+                VerificationStatusText = $"Verification failed: {ex.Message}";
+                VerificationOutput = ex.ToString();
+            }
+        });
     }
 
     public async Task ApplyApprovedAsync()
@@ -204,9 +246,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
     }
     private static string? Optional(string value) => string.IsNullOrWhiteSpace(value) ? null : value;
     private void Changed([CallerMemberName] string? property = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
-    private bool Set(ref string field, string value, [CallerMemberName] string? property = null)
+    private bool Set<T>(ref T field, T value, [CallerMemberName] string? property = null)
     {
-        if (field == value) { return false; }
+        if (EqualityComparer<T>.Default.Equals(field, value)) { return false; }
         field = value;
         Changed(property);
         return true;
