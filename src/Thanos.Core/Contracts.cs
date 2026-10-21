@@ -61,7 +61,21 @@ public interface IAIPromptGenerator
     AIPrompt Generate(AnalysisReport report, PromptMode mode);
     AIPrompt Generate(ResearchReport report, PromptMode mode);
 }
-public interface IKytyAdapter { bool Supports(KytyFingerprint kyty); ProcessRequest CreateRequest(KytyFingerprint kyty, string workingCopy); }
+public interface IKytyAdapter
+{
+    string Name { get; }
+    bool Supports(KytyFingerprint kyty);
+    ProcessRequest CreateRequest(KytyFingerprint kyty, string workingCopy);
+    ProcessRequest CreateRequest(KytyFingerprint kyty, string workingCopy, ScenarioDefinition scenario) => CreateRequest(kyty, workingCopy);
+}
+
+public interface IKytyAdapterRegistry
+{
+    void Register(IKytyAdapter adapter);
+    IKytyAdapter Select(KytyFingerprint kyty);
+    IReadOnlyList<IKytyAdapter> Adapters { get; }
+}
+
 public interface IKytyRunner { Task<ProcessResult> RunAsync(KytyFingerprint kyty, string workingCopy, CancellationToken cancellationToken = default); }
 
 public interface IVerificationEngine
