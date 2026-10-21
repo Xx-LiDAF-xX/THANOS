@@ -63,3 +63,27 @@ public interface IAIPromptGenerator
 }
 public interface IKytyAdapter { bool Supports(KytyFingerprint kyty); ProcessRequest CreateRequest(KytyFingerprint kyty, string workingCopy); }
 public interface IKytyRunner { Task<ProcessResult> RunAsync(KytyFingerprint kyty, string workingCopy, CancellationToken cancellationToken = default); }
+
+public interface IVerificationEngine
+{
+    VerificationResult Evaluate(
+        ScenarioDefinition scenario,
+        GameFingerprint game,
+        KytyFingerprint kyty,
+        string? patchId,
+        string? baselineLogText,
+        string? candidateLogText,
+        ProcessResult? candidateExecution = null);
+}
+
+public interface IVerificationService
+{
+    Task<VerificationResult> VerifyAsync(
+        ScenarioDefinition scenario,
+        string gamePath,
+        string? kytyPath = null,
+        string? patchTransactionDirectory = null,
+        string? baselineLogPath = null,
+        string? candidateLogPath = null,
+        CancellationToken cancellationToken = default);
+}

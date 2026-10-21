@@ -214,6 +214,125 @@ public sealed record VerificationResult
     public required Provenance Provenance { get; init; }
 }
 
+public enum ScenarioType
+{
+    Boot,
+    Menu,
+    Gameplay,
+    CrashReproduction,
+    Stability,
+    Performance
+}
+
+public enum VerificationLevel
+{
+    None = 0,
+    Boot = 1,
+    Intro = 2,
+    Menu = 3,
+    InGame = 4,
+    Playable = 5,
+    Complete = 6,
+    Perfect = 7
+}
+
+public sealed record ScenarioDefinition
+{
+    public int SchemaVersion { get; init; } = 1;
+    public required string Name { get; init; }
+    public ScenarioType Type { get; init; }
+    public int TargetLevel { get; init; }
+    public TimeSpan Timeout { get; init; } = TimeSpan.FromSeconds(30);
+    public string[] RequiredPatterns { get; init; } = [];
+    public string[] FailurePatterns { get; init; } = [];
+    public TimeSpan? MinDuration { get; init; }
+    public Dictionary<string, string> Environment { get; init; } = [];
+    public string[] AdditionalArguments { get; init; } = [];
+
+    public static string ToWireName(ScenarioType type) => type switch
+    {
+        ScenarioType.Boot => "BOOT",
+        ScenarioType.Menu => "MENU",
+        ScenarioType.Gameplay => "GAMEPLAY",
+        ScenarioType.CrashReproduction => "CRASH REPRODUCTION",
+        ScenarioType.Stability => "STABILITY",
+        ScenarioType.Performance => "PERFORMANCE",
+        _ => throw new ArgumentOutOfRangeException(nameof(type), type, "Unknown scenario type.")
+    };
+
+    public static ScenarioType ParseWireName(string name) => name.Trim().ToUpperInvariant() switch
+    {
+        "BOOT" => ScenarioType.Boot,
+        "MENU" => ScenarioType.Menu,
+        "GAMEPLAY" => ScenarioType.Gameplay,
+        "CRASH REPRODUCTION" or "CRASH_REPRODUCTION" or "CRASHREPRODUCTION" => ScenarioType.CrashReproduction,
+        "STABILITY" => ScenarioType.Stability,
+        "PERFORMANCE" => ScenarioType.Performance,
+        _ => throw new ArgumentException($"Unknown scenario wire name '{name}'.", nameof(name))
+    };
+
+    public static ScenarioDefinition CreateBuiltIn(ScenarioType type) => type switch
+    {
+        ScenarioType.Boot => new()
+        {
+            Name = "BOOT",
+            Type = ScenarioType.Boot,
+            TargetLevel = (int)VerificationLevel.Boot,
+            Timeout = TimeSpan.FromSeconds(20),
+            RequiredPatterns = ["runtimeLinker", "InitAll", "guest execution", "LoadSelf", "Mounting"],
+            FailurePatterns = ["FATAL", "shader CFG build failed", "Unhandled exception", "Assertion failed"]
+        },
+        ScenarioType.Menu => new()
+        {
+            Name = "MENU",
+            Type = ScenarioType.Menu,
+            TargetLevel = (int)VerificationLevel.Menu,
+            Timeout = TimeSpan.FromSeconds(35),
+            RequiredPatterns = ["menu", "title", "ui", "controller", "dialog", "scene"],
+            FailurePatterns = ["FATAL", "shader CFG build failed", "Unhandled exception", "Assertion failed"]
+        },
+        ScenarioType.Gameplay => new()
+        {
+            Name = "GAMEPLAY",
+            Type = ScenarioType.Gameplay,
+            TargetLevel = (int)VerificationLevel.InGame,
+            Timeout = TimeSpan.FromSeconds(45),
+            RequiredPatterns = ["gameplay", "world", "level", "player", "stage", "camera"],
+            FailurePatterns = ["FATAL", "shader CFG build failed", "Unhandled exception", "Assertion failed"]
+        },
+        ScenarioType.CrashReproduction => new()
+        {
+            Name = "CRASH REPRODUCTION",
+            Type = ScenarioType.CrashReproduction,
+            TargetLevel = (int)VerificationLevel.Boot,
+            Timeout = TimeSpan.FromSeconds(25),
+            RequiredPatterns = ["guest execution", "runtimeLinker"],
+            FailurePatterns = ["FATAL", "Unhandled exception", "Assertion failed"]
+        },
+        ScenarioType.Stability => new()
+        {
+            Name = "STABILITY",
+            Type = ScenarioType.Stability,
+            TargetLevel = (int)VerificationLevel.Playable,
+            Timeout = TimeSpan.FromSeconds(60),
+            MinDuration = TimeSpan.FromSeconds(15),
+            RequiredPatterns = ["guest execution"],
+            FailurePatterns = ["FATAL", "Unhandled exception", "Assertion failed", "panic"]
+        },
+        ScenarioType.Performance => new()
+        {
+            Name = "PERFORMANCE",
+            Type = ScenarioType.Performance,
+            TargetLevel = (int)VerificationLevel.Perfect,
+            Timeout = TimeSpan.FromSeconds(60),
+            MinDuration = TimeSpan.FromSeconds(20),
+            RequiredPatterns = ["guest execution", "fps", "frame"],
+            FailurePatterns = ["FATAL", "Unhandled exception", "Assertion failed", "drop"]
+        },
+        _ => throw new ArgumentOutOfRangeException(nameof(type), type, "Unknown scenario type.")
+    };
+}
+
 public sealed record ErrorSignature(int SchemaVersion, string Id, string[] ContainsAll, ErrorCategory Category, string Hypothesis, double Confidence, Provenance Provenance);
 public sealed record FamilyRelationship(int SchemaVersion, string LeftBuild, string RightBuild, RelationshipStrength Strength, Evidence[] Evidence, double Confidence, Provenance Provenance);
 public sealed record AnalysisReport(int SchemaVersion, GameFingerprint Game, KytyFingerprint? Kyty, ParsedLog? Log, string[] Limitations);
