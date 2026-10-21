@@ -39,4 +39,17 @@ public static class ServiceFactory
     public static IPatchImportService CreatePatchImporter() => new PatchImportService();
     public static IPatchValidationService CreatePatchValidator() => new PatchValidationService();
     public static IPatchTransactionService CreatePatchTransactions() => new PatchTransactionService(CreatePatchValidator());
+
+    public static IVerificationService CreateVerificationService()
+    {
+        var files = new LocalFileSystem();
+        var paths = new LocalPathService();
+        var fingerprinter = new GameFingerprinter(files, paths);
+        var detector = new KytyCapabilityDetector(fingerprinter);
+        var registry = new KytyAdapterRegistry();
+        var runner = new StreamingProcessRunner();
+        var engine = new VerificationEngine();
+        var txService = CreatePatchTransactions();
+        return new VerificationService(fingerprinter, detector, registry, runner, engine, txService);
+    }
 }
