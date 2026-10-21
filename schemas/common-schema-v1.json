@@ -513,6 +513,37 @@
         "bytes"
       ],
       "additionalProperties": false
+    },
+    "PatchCheck": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "critical": {
+          "type": "boolean"
+        },
+        "detail": {
+          "type": "string"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "common-schema-v1.json#/$defs/Evidence"
+          }
+        }
+      },
+      "required": [
+        "name",
+        "passed",
+        "critical",
+        "detail",
+        "evidence"
+      ],
+      "additionalProperties": false
     }
   }
 }

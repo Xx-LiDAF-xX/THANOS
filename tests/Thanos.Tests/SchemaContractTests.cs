@@ -19,7 +19,9 @@ public sealed class SchemaContractTests
         { typeof(KnowledgeEntry), "knowledge-entry" }, { typeof(KnowledgeBundle), "knowledge-bundle" },
         { typeof(ResearchReport), "research" }, { typeof(AddressMappingResult), "address-mapping" },
         { typeof(BinaryDifference), "binary-difference" },
-        { typeof(EvidencePackageManifest), "evidence-package" }
+        { typeof(EvidencePackageManifest), "evidence-package" },
+        { typeof(PatchImportResult), "patch-import" }, { typeof(PatchValidationResult), "patch-validation" },
+        { typeof(PatchTransaction), "patch-transaction" }
     };
 
     [Theory]

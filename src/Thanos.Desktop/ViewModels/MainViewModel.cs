@@ -9,12 +9,22 @@ namespace Thanos.Desktop.ViewModels;
 public sealed class MainViewModel : INotifyPropertyChanged
 {
     private string gamePath = "", kytyPath = "", logPath = "", knowledgePath = "", relatedPath = "", report = "", promptText = "", readiness = "";
+    private string patchPath = "", transactionPath = "", patchOutput = "";
     private string status = "Select game input to collect evidence. Capabilities and compatibility may be UNKNOWN.";
     private int revision;
     private PromptMode mode;
     private ResearchReport? research;
     private AIPrompt? prompt;
+    private PatchProposal? normalizedPatch;
+    private PatchValidationResult? patchValidation;
+    private PatchTransaction? transaction;
     private readonly AsyncCommand generate;
+    private readonly AsyncCommand importPatch;
+    private readonly AsyncCommand validatePatch;
+    private readonly AsyncCommand inspectTransaction;
+    private readonly IPatchImportService patchImporter;
+    private readonly IPatchValidationService patchValidator;
+    private readonly IPatchTransactionService patchTransactions;
     public event PropertyChangedEventHandler? PropertyChanged;
     public string GamePath { get => gamePath; set => Input(ref gamePath, value); }
     public string KytyPath { get => kytyPath; set => Input(ref kytyPath, value); }
@@ -29,13 +39,64 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public PromptMode[] Modes { get; } = Enum.GetValues<PromptMode>();
     public PromptMode Mode { get => mode; set { if (mode == value) { return; } mode = value; Changed(); ClearPrompt(); } }
     public string Status { get => status; set => Set(ref status, value); }
+    public string PatchPath { get => patchPath; set { if (Set(ref patchPath, value)) { ClearPatch(); importPatch.Refresh(); } } }
+    public string TransactionPath { get => transactionPath; set { if (Set(ref transactionPath, value)) { transaction = null; Changed(nameof(HasTransaction)); inspectTransaction.Refresh(); } } }
+    public string PatchOutput { get => patchOutput; private set => Set(ref patchOutput, value); }
+    public bool HasPatch => normalizedPatch is not null;
+    public bool HasValidPatch => patchValidation?.Status == PatchValidationStatus.Valid;
+    public bool HasTransaction => transaction is not null;
     public ICommand AnalyzeCommand { get; }
     public ICommand GeneratePromptCommand => generate;
+    public ICommand ImportPatchCommand => importPatch;
+    public ICommand ValidatePatchCommand => validatePatch;
+    public ICommand InspectTransactionCommand => inspectTransaction;
     public ResearchReport? CurrentResearch => research;
     public AIPrompt? CurrentPrompt => prompt;
+    public PatchProposal? CurrentPatch => normalizedPatch;
+    public PatchTransaction? CurrentTransaction => transaction;
 
-    public MainViewModel(IResearchService analysis)
+    public MainViewModel(IResearchService analysis, IPatchImportService? patchImporter = null, IPatchValidationService? patchValidator = null, IPatchTransactionService? patchTransactions = null)
     {
+        this.patchImporter = patchImporter ?? ServiceFactory.CreatePatchImporter();
+        this.patchValidator = patchValidator ?? ServiceFactory.CreatePatchValidator();
+        this.patchTransactions = patchTransactions ?? ServiceFactory.CreatePatchTransactions();
+        importPatch = new AsyncCommand(async () =>
+        {
+            try
+            {
+                ClearPatch();
+                var imported = await this.patchImporter.ImportAsync(PatchPath);
+                normalizedPatch = imported.Patch;
+                PatchOutput = JsonData.Serialize(imported);
+                Changed(nameof(HasPatch)); validatePatch?.Refresh();
+                Status = imported.Status == PatchImportStatus.Normalized ? "Patch normalized for validation. No imported code was executed." : $"Patch is {imported.Status}; inspect the findings. Nothing was executed.";
+            }
+            catch (Exception ex) when (PatchFailure(ex)) { Status = $"Patch import failed: {ex.Message}"; }
+        }, () => !string.IsNullOrWhiteSpace(PatchPath));
+        validatePatch = new AsyncCommand(async () =>
+        {
+            var patch = normalizedPatch;
+            if (patch is null) { return; }
+            try
+            {
+                patchValidation = await this.patchValidator.ValidateAsync(patch, GamePath, research);
+                PatchOutput = JsonData.Serialize(patchValidation);
+                Changed(nameof(HasValidPatch));
+                Status = patchValidation.Status == PatchValidationStatus.Valid ? "Patch bytes validated. Compatibility remains unverified; explicit approval is required to create a working copy." : "PATCH REJECTED. Review failed critical checks; no nearby target was tried.";
+            }
+            catch (Exception ex) when (PatchFailure(ex)) { ClearValidation(); Status = $"Patch validation failed: {ex.Message}"; }
+        }, () => normalizedPatch is not null && !string.IsNullOrWhiteSpace(GamePath));
+        inspectTransaction = new AsyncCommand(async () =>
+        {
+            try
+            {
+                transaction = await this.patchTransactions.InspectAsync(TransactionPath);
+                PatchOutput = JsonData.Serialize(transaction);
+                Changed(nameof(HasTransaction));
+                Status = $"Transaction {transaction.TransactionId} inspected: {transaction.Status}.";
+            }
+            catch (Exception ex) when (PatchFailure(ex)) { transaction = null; Changed(nameof(HasTransaction)); Status = $"Transaction inspection failed: {ex.Message}"; }
+        }, () => !string.IsNullOrWhiteSpace(TransactionPath));
         generate = new AsyncCommand(async () =>
         {
             var source = research;
@@ -85,12 +146,49 @@ public sealed class MainViewModel : INotifyPropertyChanged
             }
         });
     }
+
+    public async Task ApplyApprovedAsync()
+    {
+        var patch = normalizedPatch;
+        if (patch is null || patchValidation?.Status != PatchValidationStatus.Valid) { Status = "Validate the current patch and target before approval."; return; }
+        try
+        {
+            Status = "Creating backup and separate working copy…";
+            transaction = await patchTransactions.ApplyAsync(patch, GamePath, TransactionPath, patch.PatchId, research);
+            PatchOutput = JsonData.Serialize(transaction);
+            Changed(nameof(HasTransaction));
+            Status = $"Working-copy transaction created: {transaction.TransactionId}. The original was not modified.";
+        }
+        catch (Exception ex) when (PatchFailure(ex)) { Status = $"Patch transaction failed: {ex.Message}"; }
+    }
+
+    public async Task RollbackApprovedAsync(bool restoreOriginal)
+    {
+        var current = transaction;
+        if (current is null) { Status = "Inspect a transaction before rollback."; return; }
+        try
+        {
+            transaction = await patchTransactions.RollbackAsync(TransactionPath, current.TransactionId, restoreOriginal ? current.OriginalRoot : null);
+            PatchOutput = JsonData.Serialize(transaction);
+            Status = restoreOriginal ? "Rollback removed the working copy and restored the recorded backup. Displaced bytes, if any, were preserved." : "Rollback removed the working copy. The original remains unchanged.";
+        }
+        catch (Exception ex) when (PatchFailure(ex)) { Status = $"Rollback failed: {ex.Message}"; }
+    }
     private void ClearPrompt()
     {
         prompt = null;
         PromptText = "";
         Readiness = "";
         Changed(nameof(HasPrompt));
+    }
+    private void ClearPatch()
+    {
+        normalizedPatch = null; PatchOutput = ""; ClearValidation();
+        Changed(nameof(HasPatch)); validatePatch?.Refresh();
+    }
+    private void ClearValidation()
+    {
+        patchValidation = null; Changed(nameof(HasValidPatch));
     }
     private void Input(ref string field, string value, [CallerMemberName] string? property = null)
     {
@@ -100,16 +198,20 @@ public sealed class MainViewModel : INotifyPropertyChanged
         research = null;
         Report = "";
         ClearPrompt();
+        ClearValidation();
         generate.Refresh();
+        validatePatch.Refresh();
     }
     private static string? Optional(string value) => string.IsNullOrWhiteSpace(value) ? null : value;
     private void Changed([CallerMemberName] string? property = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
-    private void Set(ref string field, string value, [CallerMemberName] string? property = null)
+    private bool Set(ref string field, string value, [CallerMemberName] string? property = null)
     {
-        if (field == value) { return; }
+        if (field == value) { return false; }
         field = value;
         Changed(property);
+        return true;
     }
+    private static bool PatchFailure(Exception ex) => ex is InvalidDataException or IOException or UnauthorizedAccessException or ArgumentException or System.Text.Json.JsonException;
 }
 
 internal sealed class AsyncCommand(Func<Task> action, Func<bool>? allowed = null) : ICommand

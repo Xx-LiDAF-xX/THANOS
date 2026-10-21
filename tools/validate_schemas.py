@@ -210,6 +210,102 @@ def main():
         run("diagnose", executable, "--knowledge", knowledge_path, "--database", database, expected=2)
         run("map-address", executable, "invalid", "0x1", "fileOffset", expected=2)
         run("map-address", executable, "virtualAddress", "-1", "fileOffset", expected=3)
+
+        # Phase 4 patch normalization, validation, and working-copy transactions
+        patch_data = {
+            "schemaVersion": 1,
+            "patchId": "cli-test-patch",
+            "patchFamily": "synthetic-fix",
+            "gameFamily": "UNKNOWN",
+            "titleIds": [],
+            "gameVersions": [],
+            "kytyVersions": [],
+            "targetFile": "research.elf",
+            "sha256": hashlib.sha256(create_elf()).hexdigest(),
+            "signature": "90 91 92 93",
+            "originalBytes": "90 91",
+            "replacementBytes": "aa bb",
+            "location": {"addressSpace": "fileOffset", "value": "0x110"},
+            "expectedMatches": 1,
+            "reason": "Synthetic CLI validation",
+            "risk": "Low",
+            "verificationRules": ["Reinspect bytes"],
+            "provenance": {
+                "source": "external-ai synthetic",
+                "author": None,
+                "date": "2026-10-10T00:00:00+00:00",
+                "kytyVersion": None,
+                "gameVersion": None,
+                "hardware": None,
+                "status": "unverified",
+            },
+        }
+        patch_file = directory / "patch.json"
+        patch_file.write_text(json.dumps(patch_data), encoding="utf-8")
+        imported = json.loads(run("normalize-patch", patch_file).stdout)
+        validate("patch-import", imported)
+        assert imported["status"] == "normalized" and imported["patch"]["patchId"] == "cli-test-patch"
+
+        markdown_patch = directory / "patch.md"
+        markdown_patch.write_text("Review:\n```json\n" + json.dumps(patch_data) + "\n```\n", encoding="utf-8")
+        out_patch = directory / "normalized.json"
+        imported_md = json.loads(run("normalize-patch", markdown_patch, "--output", out_patch).stdout)
+        validate("patch-import", imported_md)
+        assert imported_md["status"] == "normalized" and out_patch.is_file()
+
+        script_patch = directory / "patch.py"
+        script_patch.write_text("import sys\nprint('bad')\n", encoding="utf-8")
+        imported_script = json.loads(run("normalize-patch", script_patch).stdout)
+        validate("patch-import", imported_script)
+        assert imported_script["status"] == "inspectionRequired" and imported_script["patch"] is None
+
+        diff_patch = directory / "patch.diff"
+        diff_patch.write_text("--- a/f\n+++ b/f\n", encoding="utf-8")
+        imported_diff = json.loads(run("normalize-patch", diff_patch).stdout)
+        validate("patch-import", imported_diff)
+        assert imported_diff["status"] == "inspectionRequired"
+
+        validation = json.loads(run("validate-patch", patch_file, "--game", directory).stdout)
+        validate("patch-validation", validation)
+        assert validation["status"] == "valid" and validation["fileOffset"]["value"] == "0x110"
+
+        # Validate with research context
+        valid_research_file = directory / "valid_research.json"
+        valid_research_file.write_text(json.dumps(reloaded), encoding="utf-8")
+        validation_research = json.loads(run("validate-patch", patch_file, "--game", directory, "--research", valid_research_file).stdout)
+        validate("patch-validation", validation_research)
+        assert validation_research["status"] == "valid"
+
+        # Invalid patch rejection
+        bad_patch = copy.deepcopy(patch_data)
+        bad_patch["sha256"] = "0" * 64
+        bad_patch_file = directory / "bad_patch.json"
+        bad_patch_file.write_text(json.dumps(bad_patch), encoding="utf-8")
+        bad_validation = json.loads(run("validate-patch", bad_patch_file, "--game", directory).stdout)
+        validate("patch-validation", bad_validation)
+        assert bad_validation["status"] == "rejected"
+
+        # Apply transaction
+        with tempfile.TemporaryDirectory(prefix="thanos-tx-") as tx_temp:
+            tx_dir = Path(tx_temp) / "tx-01"
+            tx = json.loads(run("apply-patch", patch_file, "--game", directory, "--transaction", tx_dir, "--approve", "cli-test-patch").stdout)
+            validate("patch-transaction", tx)
+            assert tx["status"] == "applied"
+            assert executable.read_bytes() == create_elf()
+            patched_elf = (tx_dir / "working/research.elf").read_bytes()
+            assert patched_elf[0x110] == 0xAA and patched_elf[0x111] == 0xBB
+
+            # Rollback transaction
+            rolled_back = json.loads(run("rollback", tx_dir, "--approve", tx["transactionId"]).stdout)
+            validate("patch-transaction", rolled_back)
+            assert rolled_back["status"] == "rolledBack"
+            assert not (tx_dir / "working").exists()
+            assert (tx_dir / "backup/research.elf").is_file()
+
+            # Negative checks for patch commands
+            run("apply-patch", patch_file, "--game", directory, "--transaction", tx_dir, "--approve", "wrong-patch", expected=3)
+            run("rollback", tx_dir, "--approve", "wrong-tx", expected=3)
+        run("validate-patch", patch_file, expected=2)
     print(f"Validated {len(schemas)} schemas, synthetic examples, and CLI/storage integration.")
 
 
