@@ -259,6 +259,12 @@
           "xunit.extensibility.core": "[2.9.3]"
         }
       },
+      "kytyfixer": {
+        "type": "Project",
+        "dependencies": {
+          "Thanos.Infrastructure": "[0.4.0, )"
+        }
+      },
       "thanos.core": {
         "type": "Project"
       },
@@ -268,7 +274,7 @@
           "Avalonia": "[11.3.14, )",
           "Avalonia.Desktop": "[11.3.14, )",
           "Avalonia.Themes.Fluent": "[11.3.14, )",
-          "Thanos.Infrastructure": "[0.2.0, )"
+          "Thanos.Infrastructure": "[0.4.0, )"
         }
       },
       "thanos.infrastructure": {
@@ -276,7 +282,7 @@
         "dependencies": {
           "Microsoft.Data.Sqlite": "[10.0.9, )",
           "SQLitePCLRaw.lib.e_sqlite3": "[3.53.3, )",
-          "Thanos.Core": "[0.2.0, )"
+          "Thanos.Core": "[0.4.0, )"
         }
       },
       "Avalonia": {

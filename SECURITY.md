@@ -22,6 +22,10 @@ Keep package auditing and malformed-input checks enabled. Current safeguards inc
 - Patch application modifying only separate working copies while keeping original game files read-only and preserving pristine target backups.
 - Atomic staging via temporary sibling directories with rollback on any failure.
 - Explicit approval invariants: patch application requires exact patchId confirmation; rollback requires exact transactionId confirmation; original restoration requires exact original root confirmation and saves displaced bytes in recovery.
+- Build-specific capability adapters enforcing strict CLI argument construction without shell interpolation, forbidding fabricated or unvetted emulator flags.
+- Streaming process runner executing under explicit timeouts and cancellation tokens, with full recursive process-tree termination to prevent orphaned emulator processes.
+- Verification engine enforcing strict log evidence proof requirements: missing evidence produces INCONCLUSIVE outcomes rather than fabricated PASS assertions.
+- Non-destructive execution: emulator runner never writes to or alters original game files.
 
 Logs have no configured size/line limits and full evidence uses memory; archive member spools consume temporary disk until disposed. Do not infer unlimited physical capacity. Knowledge JSON rejects duplicate properties and missing wire fields; provenance status is preserved rather than silently promoted. Imported confirmed/tool-verified statuses are assertions by the supplied source and are not cryptographically authenticated.
 
