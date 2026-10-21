@@ -26,6 +26,9 @@ public interface IResearchKnowledgeStore : IKnowledgeStore
     Task<KnowledgeBundle> ExportKnowledgeAsync(CancellationToken cancellationToken = default);
     Task SaveResearchAsync(string id, ResearchReport report, CancellationToken cancellationToken = default);
     Task<ResearchReport?> GetResearchAsync(string id, CancellationToken cancellationToken = default);
+    Task SaveVerificationAsync(string id, VerificationResult result, CancellationToken cancellationToken = default);
+    Task<VerificationResult?> GetVerificationAsync(string id, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<VerificationResult>> ListVerificationsAsync(string? binarySha256 = null, CancellationToken cancellationToken = default);
 }
 public interface IBinaryDiffer
 {
